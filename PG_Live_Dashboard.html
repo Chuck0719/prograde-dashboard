@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pro-Grade Total Inventory Adjustments</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1B2A4A;--blue:#2563EB;--teal:#059669;
+  --red:#B91C1C;--green:#166534;--amber:#92400E;
+  --bg:#F4F6F9;--card:#FFFFFF;--border:#E8ECF0;
+  --muted:#8A95A3;--text:#1A2332;--sub:#4A5568;
+  --sidebar-w:80px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+.topbar{background:#FFFFFF;padding:.65rem 1.25rem .65rem calc(var(--sidebar-w) + 1.25rem);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;border-bottom:1px solid #E2E8F0;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.topbar-brand{color:#1B2A4A;font-size:.92rem;font-weight:800;letter-spacing:-.01em}
+.topbar-meta{display:flex;align-items:center;gap:.65rem}
+.badge{font-size:.68rem;padding:3px 9px;border-radius:20px;font-weight:600}
+.badge-week{background:#EEF2FF;color:#4F46E5}
+.badge-live{background:#DCFCE7;color:#166534}
+.tbtn{padding:5px 14px;border-radius:6px;font-size:.72rem;font-weight:600;cursor:pointer;transition:all .15s;border:1.5px solid #E2E8F0;color:#4A5568;background:#fff}
+.tbtn:hover{background:#F8FAFC;border-color:#CBD5E1}
+.tbtn.green{background:#166534;border-color:#14532D;color:#fff}
+.tbtn.green:hover{background:#14532D}
+.app-body{display:flex;flex:1;min-height:0}
+.sidebar{width:var(--sidebar-w);background:#FFFFFF;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:190;padding-top:52px;border-right:1px solid #E2E8F0;box-shadow:1px 0 4px rgba(0,0,0,.05)}
+.sidebar-nav{flex:1;overflow-y:auto;padding:.5rem 0}
+.nav-group-label{font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#94A3B8;padding:.7rem .5rem .25rem;text-align:center}
+.nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.55rem .25rem;cursor:pointer;border-left:3px solid transparent;transition:all .15s;gap:3px;text-decoration:none}
+.nav-item:hover{background:#F8FAFC;border-left-color:#CBD5E1}
+.nav-item.active{background:#EEF2FF;border-left-color:#4F46E5}
+.nav-item.active.pj{background:#F0FDF4;border-left-color:#16A34A}
+.nav-item.active.bw{background:#FEF3F2;border-left-color:#DC6803}
+.nav-icon{font-size:1.1rem;line-height:1}
+.nav-label{font-size:.55rem;font-weight:600;color:#64748B;text-align:center;line-height:1.2;max-width:60px}
+.nav-item.active .nav-label{color:#1B2A4A;font-weight:700}
+.nav-divider{height:1px;background:#F1F5F9;margin:.35rem .75rem}
+.main{margin-left:var(--sidebar-w);flex:1;min-width:0;overflow-y:auto;background:var(--bg)}
+.page{display:none;padding:1.5rem 1.75rem 2.5rem}
+.page.active{display:block}
+.page-header{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:.85rem;border-bottom:2px solid var(--border);margin-bottom:1.25rem}
+.page-title{font-size:1.25rem;font-weight:800;color:var(--navy);letter-spacing:-.01em}
+.page-sub{font-size:.75rem;color:var(--muted);margin-top:4px}
+.page-date{font-size:.72rem;color:var(--muted);text-align:right;line-height:1.6}
+.tabs{display:flex;gap:8px;margin-bottom:1.25rem;align-items:center}
+.view-label{font-size:.72rem;font-weight:600;color:var(--muted);margin-right:4px;text-transform:uppercase;letter-spacing:.05em}
+.tab{padding:.38rem 1rem;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;border:2px solid transparent;transition:all .15s;user-select:none;display:flex;align-items:center;gap:6px}
+.tab:not(.active){background:#fff;border-color:var(--border);color:var(--sub)}
+.tab:not(.active):hover{border-color:#CBD5E1;background:#F8FAFC}
+.tab.active[data-view="combined"]{background:#B45309;border-color:#92400E;color:#fff}
+.tab.active[data-view="BT"]{background:#1D4ED8;border-color:#1E40AF;color:#fff}
+.tab.active[data-view="PJ"]{background:#B45309;border-color:#92400E;color:#fff}
+.tab.active[data-view="BW"]{background:#DC6803;border-color:#9A3412;color:#fff}
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:1.4rem}
+.kpi-row.kpi-row-6{grid-template-columns:repeat(6,1fr);gap:10px}
+.kpi{background:#fff;border-radius:10px;padding:1rem 1.1rem;box-shadow:0 1px 4px rgba(0,0,0,.07),0 0 0 1px rgba(0,0,0,.04)}
+.kpi-lbl{font-size:.68rem;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+.kpi-val{font-size:1.45rem;font-weight:800;line-height:1.1;letter-spacing:-.01em}
+.kpi-sub{font-size:.67rem;color:var(--muted);margin-top:4px}
+.neg{color:#C0392B}.pos{color:#1A7F4B}.warn{color:#C97A00}.neu{color:var(--navy)}
+.sec{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--navy);margin:1.3rem 0 .65rem;border-left:3px solid #4F8EF7;padding-left:8px}
+.grid{display:grid;gap:14px;margin-bottom:1.3rem}
+.g1{grid-template-columns:1fr}
+.g2{grid-template-columns:1fr 1fr}
+.chart-card{background:#fff;border-radius:10px;padding:1.1rem 1.25rem;box-shadow:0 1px 4px rgba(0,0,0,.07),0 0 0 1px rgba(0,0,0,.04)}
+.ct{font-size:.82rem;font-weight:700;color:var(--navy);margin-bottom:2px}
+.cs{font-size:.7rem;color:var(--muted);margin-bottom:.5rem}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px;font-size:.69rem;color:var(--sub);align-items:center}
+.ld{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:3px;vertical-align:middle}
+.ld-dash{width:16px;height:0;border-top:2.5px dashed;display:inline-block;margin-right:3px;vertical-align:middle}
+.tbl{width:100%;border-collapse:collapse;font-size:.77rem}
+.tbl th{background:var(--navy);color:#fff;padding:.42rem .7rem;text-align:left;font-weight:600;font-size:.7rem;letter-spacing:.02em}
+.tbl th.r,.tbl td.r{text-align:right}
+.tbl td{padding:.4rem .7rem;border-bottom:1px solid #EEF0F3}
+.tbl tr:hover td{background:#F8FAFC}
+.tbl tr:last-child td{border-bottom:none;font-weight:700;background:#F4F6F9}
+.neg-cell{color:#C0392B}.pos-cell{color:#1A7F4B}
+.wk-tbl{width:100%;border-collapse:collapse;font-size:.77rem}
+.wk-tbl th{background:var(--navy);color:#fff;padding:.4rem .65rem;text-align:left;font-weight:600;font-size:.7rem}
+.wk-tbl th.r{text-align:right}
+.wk-tbl td{padding:.38rem .65rem;border-bottom:1px solid #EEF0F3;vertical-align:middle}
+.wk-tbl tr:hover td{background:#F8FAFC}
+.wk-tbl tr:last-child td{border-bottom:none;font-weight:700;background:#F4F6F9}
+.spark-track{width:120px;height:8px;background:#EEF0F3;border-radius:4px;position:relative;display:inline-block;vertical-align:middle}
+.spark-center{position:absolute;left:50%;top:0;width:1.5px;height:8px;background:#CBD5E1}
+.spark-fill{position:absolute;height:8px;border-radius:4px;top:0}
+.exec-box{background:#EFF4FF;border-left:4px solid #2563EB;border-radius:0 10px 10px 0;padding:.9rem 1.1rem;margin-bottom:1.25rem;box-shadow:0 1px 3px rgba(37,99,235,.1)}
+.exec-label{font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#1D4ED8;margin-bottom:.5rem}
+.exec-ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.35rem}
+.kpi-row-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.3rem}
+.kpi-row-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.3rem}
+.cat-tbl{width:100%;border-collapse:collapse;font-size:.75rem}
+.cat-tbl th{background:var(--navy);color:#fff;padding:.38rem .65rem;font-size:.7rem;font-weight:600;letter-spacing:.02em}
+.cat-tbl th.r{text-align:right}
+.cat-tbl td{padding:.36rem .65rem;border-bottom:1px solid #EEF0F3}
+.cat-tbl tr:hover td{background:#F8FAFC}
+.cat-tbl tr:last-child td{font-weight:700;background:#F4F6F9;border-bottom:none}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:#fff;border-radius:14px;padding:2rem;width:min(460px,90vw);box-shadow:0 20px 60px rgba(0,0,0,.2);transform:translateY(12px);transition:transform .2s;position:relative}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-title{font-size:.98rem;font-weight:700;color:var(--navy);margin-bottom:.2rem}
+.modal-sub{font-size:.76rem;color:var(--muted);margin-bottom:1.1rem}
+.modal-drop{border:2px dashed #CBD5E1;border-radius:10px;padding:1.6rem;text-align:center;cursor:pointer;transition:all .2s;background:#F8FAFC}
+.modal-drop:hover,.modal-drop.drag-over{border-color:var(--blue);background:#EFF6FF}
+.modal-drop input{display:none}
+.modal-drop-icon{font-size:1.7rem;margin-bottom:.4rem;opacity:.3}
+.modal-drop-title{font-size:.85rem;font-weight:600;color:var(--text);margin-bottom:.18rem}
+.modal-drop-sub{font-size:.73rem;color:var(--muted)}
+.modal-drop-btn{display:inline-block;margin-top:.6rem;padding:.38rem .95rem;background:var(--blue);color:#fff;border-radius:6px;font-size:.76rem;font-weight:500;cursor:pointer}
+.modal-loaded{display:flex;align-items:center;justify-content:center;gap:.4rem;font-size:.76rem;color:#1A7F4B;margin-top:.55rem}
+.modal-close{position:absolute;top:.85rem;right:.95rem;background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted)}
+.no-data-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;text-align:center;padding:2rem;margin-left:var(--sidebar-w);background:var(--bg)}
+.nd-icon{font-size:2.8rem;opacity:.22;margin-bottom:.9rem}
+.nd-title{font-size:1.05rem;font-weight:800;color:var(--navy);margin-bottom:.35rem}
+.nd-sub{font-size:.82rem;color:var(--muted);margin-bottom:1.4rem;max-width:340px}
+.nd-open-btn{padding:.52rem 1.3rem;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer}
+.footer{font-size:.68rem;color:var(--muted);text-align:center;padding:.85rem 0 1.75rem;border-top:1px solid var(--border);margin-top:.5rem}
+@media(max-width:800px){.kpi-row,.kpi-row-4{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}}
+
+</style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="topbar-brand">Pro-Grade · Inventory Adjustments</div>
+  <div class="topbar-meta">
+    <span class="badge badge-week" id="wk-badge">Week —</span>
+    <span class="badge badge-live" id="live-badge" style="display:none">● Live</span>
+    <button class="tbtn" onclick="openModal()">⬆ Update data</button>
+    <button id="save-btn" class="tbtn green" onclick="saveWithData()" style="display:none">⬇ Save with data</button>
+  </div>
+</div>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <nav class="sidebar-nav" id="sidebar-nav">
+    <div class="nav-group-label">Overview</div>
+    <div class="nav-item active" data-page="overview" onclick="navTo('overview')">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">Pro-Grade</span>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-group-label">BT</div>
+    <div class="nav-item" data-page="batavia" onclick="navTo('batavia')">
+      <span class="nav-icon">🏭</span>
+      <span class="nav-label">Batavia</span>
+    </div>
+    <div class="nav-item" data-page="madill" onclick="navTo('madill')">
+      <span class="nav-icon">🏭</span>
+      <span class="nav-label">Madill</span>
+    </div>
+    <div class="nav-item" data-page="mtpleasant" onclick="navTo('mtpleasant')">
+      <span class="nav-icon">🏭</span>
+      <span class="nav-label">Mt Pleasant</span>
+    </div>
+    <div class="nav-item" data-page="willspoint" onclick="navTo('willspoint')">
+      <span class="nav-icon">🏭</span>
+      <span class="nav-label">Wills Point</span>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-group-label">PJ</div>
+    <div class="nav-item pj" data-page="sumner" onclick="navTo('sumner')" style="display:none">
+      <span class="nav-icon">🏭</span>
+      <span class="nav-label">Sumner</span>
+    </div>
+    <div class="nav-item pj" data-page="mtorab" onclick="navTo('mtorab')" style="display:none">
+      <span class="nav-icon">🏭</span>
+      <span class="nav-label">Mt Orab</span>
+    </div>
+    <div class="nav-item pj" data-page="mexico" onclick="navTo('mexico')" style="display:none">
+      <span class="nav-icon">🏭</span>
+      <span class="nav-label">Mexico</span>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-group-label">B-Wise</div>
+    <div class="nav-item bw" data-page="bwise" onclick="navTo('bwise')" style="display:none">
+      <span class="nav-icon">🏭</span>
+      <span class="nav-label">Chambersburg</span>
+    </div>
+  </nav>
+</div>
+
+<!-- Upload modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title">Update dashboard data</div>
+    <div class="modal-sub">Drop your weekly <strong>PG_Dashboard_Data</strong> .xlsx</div>
+    <div class="modal-drop" id="modal-drop">
+      <input type="file" id="file-input" accept=".xlsx,.xls">
+      <div class="modal-drop-icon">📂</div>
+      <div class="modal-drop-title">Drop file here</div>
+      <div class="modal-drop-sub">or click to browse</div>
+      <label class="modal-drop-btn" for="file-input">Choose File</label>
+      <div class="modal-loaded" id="file-loaded" style="display:none">✓ <span id="file-name"></span></div>
+    </div>
+    <div style="font-size:.7rem;color:var(--muted);text-align:center;margin-top:.8rem">Data stays in your browser · Nothing uploaded to any server</div>
+  </div>
+</div>
+
+<!-- No data screen -->
+<div class="no-data-screen" id="no-data-screen">
+  <div class="nd-icon">📊</div>
+  <div class="nd-title">No data loaded yet</div>
+  <div class="nd-sub">Load your weekly PG_Dashboard_Data Excel file to populate the dashboard.</div>
+  <button class="nd-open-btn" onclick="openModal()">⬆ Load data file</button>
+</div>
+
+<!-- Main content area -->
+<div class="main" id="main-content" style="display:none">
+
+  <!-- ═══ PAGE: OVERVIEW ═══ -->
+  <div class="page active" id="page-overview">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Pro-Grade Total Inventory Adjustments</div>
+        <div class="page-sub" id="ov-sub">YTD 2026 · BT & PJ Business Units</div>
+      </div>
+      <div class="page-date" id="ov-date"></div>
+    </div>
+
+    <div class="tabs">
+      <span class="view-label">View:</span>
+      <div class="tab active" data-view="combined" onclick="setView('combined')">🏭 Pro-Grade</div>
+      <div class="tab" data-view="BT" onclick="setView('BT')">🔵 BT – Big Tex</div>
+      <div class="tab" data-view="PJ" onclick="setView('PJ')">🟡 PJ – PJ Trailers</div>
+      <div class="tab" data-view="BW" onclick="setView('BW')">🟠 B-Wise</div>
+    </div>
+
+    <div class="exec-box" id="exec-summary" style="display:none">
+      <div class="exec-label">Executive Summary</div>
+      <ul class="exec-ul" id="exec-bullets"></ul>
+    </div>
+
+    <div class="sec">Key metrics — year to date</div>
+    <div class="kpi-row" id="kpi-row"></div>
+
+    <div class="sec">Cumulative monthly adjustment trend</div>
+    <div class="grid g1">
+      <div class="chart-card">
+        <div class="ct" id="trend-title">Pro-Grade — cumulative monthly ($M)</div>
+        <div class="cs">2025 actual vs 2026 actual vs full-year budget (flat line)</div>
+        <div class="legend" id="trend-legend"></div>
+        <div style="position:relative;height:260px"><canvas id="trendChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="sec">Monthly actual vs budget</div>
+    <div class="grid g1">
+      <div class="chart-card">
+        <div class="ct" id="loc-title">Actual vs. Budget</div>
+        <div class="cs">2025 MoM vs 2026 MoM vs monthly budget</div>
+        <div class="legend" id="loc-legend"></div>
+        <div style="position:relative;height:290px"><canvas id="locChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="sec">Month-by-month comparison</div>
+    <div class="grid g1">
+      <div class="chart-card">
+        <div class="ct" id="table-title">Monthly actuals — Pro-Grade combined ($)</div>
+        <div class="cs">Negative = unfavorable. YTD total at bottom.</div>
+        <div style="overflow-x:auto;margin-top:.4rem"><table class="tbl" id="mom-table"></table></div>
+      </div>
+    </div>
+
+    <div class="sec">Current week — location ranked table</div>
+    <div class="grid g1">
+      <div class="chart-card">
+        <div class="ct" id="wk-title">Week — all locations</div>
+        <div class="cs">Sorted worst to best · bar shows share of net week total</div>
+        <div style="overflow-x:auto;margin-top:.4rem">
+          <table class="wk-tbl"><thead><tr><th>Location</th><th>BU</th><th class="r">Ext Cost ($)</th><th class="r">% of Net</th><th>Impact</th></tr></thead>
+          <tbody id="wk-tbody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Pro-Grade Manufacturing · Total Inventory Adjustments · Drop updated .xlsx to refresh · Confidential</div>
+  </div>
+
+  <!-- ═══ LOCATION PAGES (generated) ═══ -->
+  <div class="page" id="page-batavia"></div>
+  <div class="page" id="page-madill"></div>
+  <div class="page" id="page-mtpleasant"></div>
+  <div class="page" id="page-willspoint"></div>
+  <div class="page" id="page-sumner"></div>
+  <div class="page" id="page-mtorab"></div>
+  <div class="page" id="page-mexico"></div>
+  <div class="page" id="page-bwise"></div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// GLOBALS
+// ═══════════════════════════════════════════════════════
+let charts = {};
+let STATE = {};
+let VIEW = 'combined';
+let CURRENT_PAGE = 'overview';
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const gc = 'rgba(0,0,0,0.055)', tc = '#94A3B8';
+
+// Location definitions
+const LOCATIONS = {
+  batavia:   { name:'Batavia',      bu:'BT', color:'#2563EB', key:'Batavia',        catKey:'Batavia' },
+  madill:    { name:'Madill',       bu:'BT', color:'#2563EB', key:'Madill',          catKey:'Madill' },
+  mtpleasant:{ name:'Mt Pleasant',  bu:'BT', color:'#2563EB', key:'Mt Pleasant',     catKey:'Mt Pleasant' },
+  willspoint:{ name:'Wills Point',  bu:'BT', color:'#2563EB', key:'Wills Point',     catKey:'Wills Point' },
+  sumner:    { name:'Sumner',       bu:'PJ', color:'#059669', key:"Sumner ($'s/M)",  catKey:'Sumner' },
+  mtorab:    { name:'Mt Orab',      bu:'PJ', color:'#059669', key:"Mt Orab ($'s/M)", catKey:'Mt Orab' },
+  mexico:    { name:'Mexico',       bu:'PJ', color:'#059669', key:"Mexico ($'sM)",   catKey:'Mexcio' },
+  bwise:     { name:'B-Wise',       bu:'BW', color:'#DC6803', key:'B-Wise',          catKey:'B-Wise' },
+};
+
+// ═══════════════════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════════════════
+function openModal() { document.getElementById('modal-overlay').classList.add('open'); }
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function handleOverlayClick(e) { if(e.target===document.getElementById('modal-overlay')) closeModal(); }
+
+// ═══════════════════════════════════════════════════════
+// FILE I/O
+// ═══════════════════════════════════════════════════════
+const mdrop = document.getElementById('modal-drop');
+mdrop.addEventListener('dragover', e=>{e.preventDefault();mdrop.classList.add('drag-over');});
+mdrop.addEventListener('dragleave', ()=>mdrop.classList.remove('drag-over'));
+mdrop.addEventListener('drop', e=>{e.preventDefault();mdrop.classList.remove('drag-over');if(e.dataTransfer.files[0])load(e.dataTransfer.files[0]);});
+document.getElementById('file-input').addEventListener('change', e=>{if(e.target.files[0])load(e.target.files[0]);});
+
+function load(file) {
+  document.getElementById('file-name').textContent = file.name;
+  document.getElementById('file-loaded').style.display = 'flex';
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      parseAndRender(wb);
+      try {
+        localStorage.setItem('pg_dash_data', XLSX.write(wb,{type:'base64',bookType:'xlsx'}));
+        localStorage.setItem('pg_dash_saved', new Date().toISOString());
+      } catch(se){}
+      setTimeout(closeModal, 700);
+    } catch(err){ alert('Could not read file: '+err.message); }
+  };
+  r.readAsArrayBuffer(file);
+}
+
+window.addEventListener('DOMContentLoaded', ()=>{
+  // Try embedded data first
+  if(window.__EMBEDDED_STATE) {
+    STATE = window.__EMBEDDED_STATE;
+    showDashboard();
+    return;
+  }
+  // Then localStorage
+  const saved = localStorage.getItem('pg_dash_data');
+  if(saved) {
+    try {
+      const wb = XLSX.read(saved, {type:'base64'});
+      parseAndRender(wb);
+    } catch(e){}
+  }
+});
+
+// ═══════════════════════════════════════════════════════
+// PARSE
+// ═══════════════════════════════════════════════════════
+function parseAndRender(wb) {
+  const sn = wb.SheetNames.find(n=>n.toLowerCase().includes('data'))||wb.SheetNames[0];
+  const raw = XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:null});
+
+  let sec=null;
+  const bt25={},bt26={},pj25={},pj26={},bw25={},bw26={};
+  let btWk='—',pjWk='—',bwWk='—';
+  const btLocs=[],pjLocs=[];
+  let btWkTotal=0,pjWkTotal=0,bwWkTotal=0;
+
+  // Location MoM data: keyed by location name → {budget:{}, mom25:{}, mom26:{}}
+  const locMoM = {};
+  // Category data: keyed by location name → [{cat, val}]
+  const btCats = {}, pjCats = {}, bwCats = {};
+
+  const MS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  for(let r=0;r<raw.length;r++){
+    const row=raw[r];
+    if(!row) continue;
+    if(row[0]==='BT Trailers Data'){sec='bt';continue;}
+    if(row[0]==='PJ Trailers Data'){sec='pj';continue;}
+    if(row[1]==='B-Wise'&&row[0]==null){sec='bw';continue;}
+
+    // Monthly totals
+    if(MONTHS.includes(row[0])&&typeof row[1]==='number'){
+      if(sec==='bt'){bt25[row[0]]=row[1];if(typeof row[2]==='number'&&row[2]!==0)bt26[row[0]]=row[2];}
+      if(sec==='pj'){pj25[row[0]]=row[1];if(typeof row[2]==='number'&&row[2]!==0)pj26[row[0]]=row[2];}
+      if(sec==='bw'){bw25[row[0]]=row[1];if(typeof row[2]==='number'&&row[2]!==0)bw26[row[0]]=row[2];}
+    }
+
+    // Week number
+    if(row[0]==='Week'&&row[1]!=null){if(sec==='bt')btWk=row[1];else if(sec==='pj')pjWk=row[1];else if(sec==='bw')bwWk=row[1];}
+
+    // Weekly location list (BT/PJ have multi-row tables; B-Wise has a single row)
+    if(row[0]==='Row Labels'&&row[1]==='Sum of Ext Cost'){
+      const tgt=sec;
+      for(let i=r+1;i<raw.length;i++){
+        const lr=raw[i];if(!lr||!lr[0])break;
+        if(lr[0]==='BT Trailers Data'||lr[0]==='PJ Trailers Data'||(lr[1]==='B-Wise'&&lr[0]==null))break;
+        if(lr[0]==='Grand Total'){if(tgt==='bt')btWkTotal=lr[1]||0;else if(tgt==='pj')pjWkTotal=lr[1]||0;break;}
+        if(typeof lr[1]==='number'){
+          if(tgt==='bt')btLocs.push({name:lr[0],val:lr[1],bu:'BT'});
+          else if(tgt==='pj')pjLocs.push({name:lr[0],val:lr[1],bu:'PJ'});
+          else if(tgt==='bw')bwWkTotal=lr[1]||0; // single location = its own total
+        }
+      }
+    }
+
+    // Location MoM blocks (BT/PJ) — header row: row[7]=loc name, row[8]='2026 Budget', etc
+    if(row[7]&&typeof row[7]==='string'&&row[8]==='2026 Budget'&&row[9]==='2025 MoM'&&row[10]==='2026 MoM'){
+      const locName = row[7];
+      locMoM[locName]={budget:{},mom25:{},mom26:{}};
+      for(let i=r+1;i<raw.length;i++){
+        const lr=raw[i];
+        if(!lr||!lr[7]||!MONTHS.includes(lr[7]))break;
+        const m=lr[7];
+        if(typeof lr[8]==='number') locMoM[locName].budget[m]=lr[8];
+        if(typeof lr[9]==='number') locMoM[locName].mom25[m]=lr[9];
+        if(typeof lr[10]==='number'&&lr[10]!==0) locMoM[locName].mom26[m]=lr[10];
+      }
+      const extraBlocks = [[11,12,13,14],[15,16,17,18],[21,22,23,24],[25,26,27,28]];
+      extraBlocks.forEach(([nc,nb,n5,n6])=>{
+        if(row[nc]&&typeof row[nc]==='string'&&row[nb]==='2026 Budget'){
+          const ln2=row[nc];
+          locMoM[ln2]={budget:{},mom25:{},mom26:{}};
+          for(let i=r+1;i<raw.length;i++){
+            const lr=raw[i];
+            if(!lr||!lr[7]||!MONTHS.includes(lr[7]))break;
+            const m=lr[7];
+            if(typeof lr[nb]==='number') locMoM[ln2].budget[m]=lr[nb];
+            if(typeof lr[n5]==='number') locMoM[ln2].mom25[m]=lr[n5];
+            if(typeof lr[n6]==='number'&&lr[n6]!==0) locMoM[ln2].mom26[m]=lr[n6];
+          }
+        }
+      });
+    }
+
+    // B-Wise MoM block — vertical table like BT/PJ: header row has '2026 Budget','2025 MoM','2026 MoM' in cols 8,9,10
+    if(row[8]==='2026 Budget'&&row[9]==='2025 MoM'&&row[10]==='2026 MoM'){
+      locMoM['B-Wise']={budget:{},mom25:{},mom26:{}};
+      for(let i=r+1;i<raw.length;i++){
+        const lr=raw[i];
+        if(!lr||!lr[7]||!MONTHS.includes(lr[7]))break;
+        const m=lr[7];
+        if(typeof lr[8]==='number') locMoM['B-Wise'].budget[m]=lr[8];
+        if(typeof lr[9]==='number') locMoM['B-Wise'].mom25[m]=lr[9];
+        if(typeof lr[10]==='number'&&lr[10]!==0) locMoM['B-Wise'].mom26[m]=lr[10];
+      }
+    }
+
+    // Category breakdown tables (rows 106+)
+    if(row[1]==='Category'&&row[2]!=null){
+      // BT category table — row[1]=Category, row[2..6]=location names
+      const btLocCols = [];
+      for(let c=2;c<=7;c++) if(row[c]&&typeof row[c]==='string') btLocCols.push({col:c,name:row[c]});
+      if(btLocCols.length>0){
+        btLocCols.forEach(lc=>{if(!btCats[lc.name])btCats[lc.name]=[];});
+        for(let i=r+1;i<raw.length;i++){
+          const lr=raw[i];
+          if(!lr||lr[1]===null)break;
+          if(lr[1]==='Grand Total'){
+            btLocCols.forEach(lc=>{if(typeof lr[lc.col]==='number')btCats[lc.name].push({cat:'Grand Total',val:lr[lc.col]});});
+            break;
+          }
+          if(typeof lr[1]==='string'){
+            btLocCols.forEach(lc=>{if(typeof lr[lc.col]==='number')btCats[lc.name].push({cat:lr[1],val:lr[lc.col]});});
+          }
+        }
+      }
+      // PJ category table — col 10 onwards
+      if(row[10]==='Category'&&row[11]!=null){
+        const pjLocCols=[];
+        for(let c=11;c<=15;c++) if(row[c]&&typeof row[c]==='string') pjLocCols.push({col:c,name:row[c]});
+        pjLocCols.forEach(lc=>{if(!pjCats[lc.name])pjCats[lc.name]=[];});
+        for(let i=r+1;i<raw.length;i++){
+          const lr=raw[i];
+          if(!lr||lr[10]===null)break;
+          if(lr[10]==='Grand Total'){
+            pjLocCols.forEach(lc=>{if(typeof lr[lc.col]==='number')pjCats[lc.name].push({cat:'Grand Total',val:lr[lc.col]});});
+            break;
+          }
+          if(typeof lr[10]==='string'){
+            pjLocCols.forEach(lc=>{if(typeof lr[lc.col]==='number')pjCats[lc.name].push({cat:lr[10],val:lr[lc.col]});});
+          }
+        }
+      }
+    }
+  }
+
+  const bwLocs = [{name:'B-Wise', val:bwWkTotal, bu:'BW'}];
+  const bwBudgetSum = locMoM['B-Wise'] ? Object.values(locMoM['B-Wise'].budget).reduce((a,b)=>a+b,0) : -0.352435;
+
+  STATE = {
+    bt25,bt26,pj25,pj26,bw25,bw26,btWk,pjWk,bwWk,
+    btLocs,pjLocs,bwLocs,btWkTotal,pjWkTotal,bwWkTotal,
+    btBudget:-2.17,pjBudget:-5.73,bwBudget:bwBudgetSum,
+    locMoM, btCats, pjCats, bwCats
+  };
+
+  showDashboard();
+}
+
+function showDashboard(savedAt) {
+  document.getElementById('no-data-screen').style.display='none';
+  document.getElementById('main-content').style.display='block';
+  document.getElementById('live-badge').style.display='inline';
+  document.getElementById('save-btn').style.display='inline';
+  document.getElementById('wk-badge').textContent='Week '+Math.max(+STATE.btWk||0,+STATE.pjWk||0,+STATE.bwWk||0);
+
+  const d = new Date();
+  const dateStr = d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  const saved = localStorage.getItem('pg_dash_saved');
+  const updStr = saved ? 'Last updated '+new Date(saved).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'Last updated '+d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  document.getElementById('ov-date').innerHTML = dateStr+'<br><span style="color:#94A3B8;font-size:.68rem">'+updStr+'</span>';
+
+  // Show PJ and BW nav items now that we have data
+  document.querySelectorAll('.nav-item.pj').forEach(el=>el.style.display='flex');
+  document.querySelectorAll('.nav-item.bw').forEach(el=>el.style.display='flex');
+
+  setView('combined');
+  renderLocationPages();
+}
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+function navTo(pageId) {
+  CURRENT_PAGE = pageId;
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active', el.dataset.page===pageId));
+  document.querySelectorAll('.page').forEach(el=>el.classList.toggle('active', el.id==='page-'+pageId));
+  // Resize charts if switching to overview
+  if(pageId==='overview') Object.values(charts).forEach(c=>{try{c.resize();}catch(e){}});
+}
+
+// ═══════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════
+const sumObj = obj => Object.values(obj).reduce((a,b)=>a+(b||0),0);
+function mergeMo3(a,b,c){const o={};MONTHS.forEach(m=>{if(a[m]!=null||b[m]!=null||c[m]!=null)o[m]=(a[m]||0)+(b[m]||0)+(c[m]||0);});return o;}
+function get25(v){return v==='BT'?STATE.bt25:v==='PJ'?STATE.pj25:v==='BW'?(STATE.bw25||{}):mergeMo3(STATE.bt25,STATE.pj25,STATE.bw25||{});}
+function get26(v){return v==='BT'?STATE.bt26:v==='PJ'?STATE.pj26:v==='BW'?(STATE.bw26||{}):mergeMo3(STATE.bt26,STATE.pj26,STATE.bw26||{});}
+function budget(v){return v==='BT'?STATE.btBudget:v==='PJ'?STATE.pjBudget:v==='BW'?(STATE.bwBudget||0):STATE.btBudget+STATE.pjBudget+(STATE.bwBudget||0);}
+function fmt(v){if(v==null||isNaN(v))return'—';const s=v<0?'−':'+',a=Math.abs(v);if(a>=1e6)return s+'$'+(a/1e6).toFixed(2)+'M';if(a>=1e3)return s+'$'+Math.round(a/1e3)+'K';return s+'$'+a.toFixed(0);}
+function fmtFull(v){if(v==null||isNaN(v))return'—';return(v<0?'−':'+')+' $'+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});}
+function fmtM(v){if(v==null||isNaN(v))return'—';const s=v<0?'−':'+';const a=Math.abs(v);if(a<1)return s+'$'+Math.round(a*1000)+'K';return s+'$'+a.toFixed(2)+'M';}
+function kc(v){return v<0?'neg':v>0?'pos':'neu';}
+function nc(v){return v<0?'neg-cell':v>0?'pos-cell':'';}
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+
+// ═══════════════════════════════════════════════════════
+// OVERVIEW — SET VIEW
+// ═══════════════════════════════════════════════════════
+function setView(v) {
+  VIEW = v;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));
+  const subMap={combined:'YTD 2026 · Pro-Grade — BT, PJ & B-Wise',BT:'YTD 2026 · BT Trailers only',PJ:'YTD 2026 · PJ Trailers only',BW:'YTD 2026 · B-Wise only'};
+  document.getElementById('ov-sub').textContent = subMap[v];
+  renderKPIs(); renderExecSummary(); renderTrend(); renderTable(); renderWeekCards(); renderLocChart();
+}
+
+// ═══════════════════════════════════════════════════════
+// KPIs
+// ═══════════════════════════════════════════════════════
+function renderKPIs() {
+  const v=VIEW, ytd26=sumObj(get26(v)), bgt=budget(v);
+  const bt25sp=Object.keys(STATE.bt26).reduce((a,m)=>a+(STATE.bt25[m]||0),0);
+  const pj25sp=Object.keys(STATE.pj26).reduce((a,m)=>a+(STATE.pj25[m]||0),0);
+  const bw25sp=Object.keys(STATE.bw26||{}).reduce((a,m)=>a+((STATE.bw25||{})[m]||0),0);
+  const comb25sp=bt25sp+pj25sp+bw25sp;
+  const sp25=v==='combined'?comb25sp:v==='BT'?bt25sp:v==='PJ'?pj25sp:bw25sp;
+  const yoy=sp25!==0?((ytd26-sp25)/Math.abs(sp25)*100):0;
+  let kpis;
+  if(v==='combined'){
+    kpis=[
+      {lbl:'Combined YTD 2026',val:fmt(ytd26),sub:fmt(comb25sp)+' in 2025',vc:kc(ytd26)},
+      {lbl:'BT YTD 2026',val:fmt(sumObj(STATE.bt26)),sub:fmt(bt25sp)+' in 2025',vc:kc(sumObj(STATE.bt26))},
+      {lbl:'PJ YTD 2026',val:fmt(sumObj(STATE.pj26)),sub:fmt(pj25sp)+' in 2025',vc:kc(sumObj(STATE.pj26))},
+      {lbl:'B-Wise YTD 2026',val:fmt(sumObj(STATE.bw26||{})),sub:fmt(bw25sp)+' in 2025',vc:kc(sumObj(STATE.bw26||{}))},
+      {lbl:'vs Annual Budget',val:fmt(ytd26-(bgt*1e6)),sub:'Budget: '+fmtM(bgt),vc:kc(ytd26-(bgt*1e6))},
+      {lbl:'YoY Change',val:yoy.toFixed(1)+'%',sub:'vs same period 2025',vc:yoy>0?'pos':'neg'},
+    ];
+  } else {
+    const wkTotal=v==='BT'?STATE.btWkTotal:v==='PJ'?STATE.pjWkTotal:(STATE.bwWkTotal||0);
+    const wkNum=v==='BT'?STATE.btWk:v==='PJ'?STATE.pjWk:(STATE.bwWk||'—');
+    kpis=[
+      {lbl:v+' YTD 2026',val:fmt(ytd26),sub:fmt(sp25)+' in 2025',vc:kc(ytd26)},
+      {lbl:'vs Annual Budget',val:fmt(ytd26-(bgt*1e6)),sub:'Budget: '+fmtM(bgt),vc:kc(ytd26-(bgt*1e6))},
+      {lbl:'YoY Change',val:yoy.toFixed(1)+'%',sub:'vs same period 2025',vc:yoy>0?'pos':'neg'},
+      {lbl:'Months reported',val:Object.keys(get26(v)).length,sub:'of 12 full year',vc:'neu'},
+      {lbl:'Week '+wkNum+' total',val:fmt(wkTotal),sub:v+' this week',vc:kc(wkTotal)},
+    ];
+  }
+  document.getElementById('kpi-row').classList.toggle('kpi-row-6', v==='combined');
+  document.getElementById('kpi-row').innerHTML=kpis.map(k=>`<div class="kpi"><div class="kpi-lbl">${k.lbl}</div><div class="kpi-val ${k.vc}">${k.val}</div><div class="kpi-sub">${k.sub}</div></div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// EXEC SUMMARY
+// ═══════════════════════════════════════════════════════
+function renderExecSummary() {
+  const v=VIEW;
+  const ytd26=sumObj(get26(v));
+  const bt26=sumObj(STATE.bt26),pj26=sumObj(STATE.pj26),bw26=sumObj(STATE.bw26||{});
+  const bt25sp=Object.keys(STATE.bt26).reduce((a,m)=>a+(STATE.bt25[m]||0),0);
+  const pj25sp=Object.keys(STATE.pj26).reduce((a,m)=>a+(STATE.pj25[m]||0),0);
+  const bw25sp=Object.keys(STATE.bw26||{}).reduce((a,m)=>a+((STATE.bw25||{})[m]||0),0);
+  const comb25sp=bt25sp+pj25sp+bw25sp;
+  const sp25=v==='combined'?comb25sp:v==='BT'?bt25sp:v==='PJ'?pj25sp:bw25sp;
+  const bgt=budget(v);
+  const vsBgt=ytd26-bgt;
+  const yoy=sp25!==0?((ytd26-sp25)/Math.abs(sp25)*100):0;
+  const months=Object.keys(v==='BT'?STATE.bt26:v==='PJ'?STATE.pj26:v==='BW'?(STATE.bw26||{}):STATE.bt26);
+  const lastMonth=months[months.length-1]||'latest period';
+  const wkNum=v==='BT'?STATE.btWk:v==='PJ'?STATE.pjWk:v==='BW'?(STATE.bwWk||'—'):Math.max(+STATE.btWk||0,+STATE.pjWk||0,+(STATE.bwWk||0));
+  const buLabel=v==='combined'?'Pro-Grade (BT, PJ & B-Wise)':v==='BW'?'B-Wise':v+' Trailers';
+  const bullets=[];
+  const pctOfBgt = bgt!==0 ? (ytd26/(Math.abs(bgt)*1e6)*100) : 0;
+  const bgtColor = pctOfBgt > 100 ? '#B91C1C' : '#166534';
+  bullets.push({color:'#1E293B',text:`<strong>${buLabel} YTD through ${lastMonth} are ${fmt(ytd26)}</strong>, carrying <strong style="color:${bgtColor}">${pctOfBgt.toFixed(1)}% of the full-year budget</strong> of ${fmtM(bgt)}.`});
+  const yoyColor=yoy>=0?'#166534':'#B91C1C';
+  bullets.push({color:yoyColor,text:`Compared to the same period in 2025 (${fmt(sp25)}), 2026 is <strong style="color:${yoyColor}">${Math.abs(yoy).toFixed(1)}% ${yoy>=0?'better':'worse'}</strong> year-over-year.`});
+  if(v==='combined'){
+    const btYoy=bt25sp!==0?((bt26-bt25sp)/Math.abs(bt25sp)*100):0;
+    const pjYoy=pj25sp!==0?((pj26-pj25sp)/Math.abs(pj25sp)*100):0;
+    const bwYoy=bw25sp!==0?((bw26-bw25sp)/Math.abs(bw25sp)*100):0;
+    bullets.push({color:'#1E293B',text:`By BU: BT is ${fmt(bt26)} YTD (<strong style="color:${btYoy>=0?'#166534':'#B91C1C'}">${Math.abs(btYoy).toFixed(1)}% ${btYoy>=0?'favorable':'unfavorable'}</strong> vs 2025); PJ is ${fmt(pj26)} YTD (<strong style="color:${pjYoy>=0?'#166534':'#B91C1C'}">${Math.abs(pjYoy).toFixed(1)}% ${pjYoy>=0?'favorable':'unfavorable'}</strong> vs 2025); B-Wise is ${fmt(bw26)} YTD (<strong style="color:${bwYoy>=0?'#166534':'#B91C1C'}">${Math.abs(bwYoy).toFixed(1)}% ${bwYoy>=0?'favorable':'unfavorable'}</strong> vs 2025).`});
+  }
+  const wkLocs=v==='BT'?STATE.btLocs:v==='PJ'?STATE.pjLocs:v==='BW'?(STATE.bwLocs||[]):[...STATE.btLocs,...STATE.pjLocs,...(STATE.bwLocs||[])];
+  const wkTotal=v==='BT'?STATE.btWkTotal:v==='PJ'?STATE.pjWkTotal:v==='BW'?(STATE.bwWkTotal||0):STATE.btWkTotal+STATE.pjWkTotal+(STATE.bwWkTotal||0);
+  if(wkTotal!==0){
+    const worst=[...wkLocs].sort((a,b)=>a.val-b.val)[0];
+    const best=[...wkLocs].sort((a,b)=>b.val-a.val)[0];
+    const wkColor=wkTotal<=0?'#B91C1C':'#166534';
+    let txt=`Week ${wkNum} total is <strong style="color:${wkColor}">${fmt(wkTotal)}</strong> (${wkTotal<=0?'unfavorable':'favorable'}).`;
+    if(worst&&worst.val<0)txt+=` Largest drag: <strong>${worst.name}</strong> at ${fmt(worst.val)}.`;
+    if(best&&best.val>0)txt+=` Best performer: <strong>${best.name}</strong> at ${fmt(best.val)}.`;
+    bullets.push({color:wkColor,text:txt});
+  }
+  document.getElementById('exec-bullets').innerHTML=bullets.map(b=>`<li style="display:flex;gap:.55rem;align-items:flex-start;font-size:.8rem;color:#1E293B;line-height:1.5"><span style="color:${b.color};font-size:.85rem;margin-top:1px">●</span><span>${b.text}</span></li>`).join('');
+  document.getElementById('exec-summary').style.display='block';
+}
+
+// ═══════════════════════════════════════════════════════
+// TREND CHART
+// ═══════════════════════════════════════════════════════
+function renderTrend() {
+  const v=VIEW;
+  const labels=[],dComb25=[],dComb26=[],dBT26=[],dPJ26=[],dBudget=[];
+  let c25=0,c26=0,cBT=0,cPJ=0;
+  const flatBudget=+(budget(v)).toFixed(3);
+  MONTHS.forEach((m,i)=>{
+    const hasBT25=STATE.bt25[m]!=null,hasPJ25=STATE.pj25[m]!=null,hasBW25=(STATE.bw25||{})[m]!=null;
+    const hasBT26=STATE.bt26[m]!=null,hasPJ26=STATE.pj26[m]!=null,hasBW26=(STATE.bw26||{})[m]!=null;
+    const hasSome=(v==='combined'&&(hasBT25||hasPJ25||hasBW25||hasBT26||hasPJ26||hasBW26))||(v==='BT'&&(hasBT25||hasBT26))||(v==='PJ'&&(hasPJ25||hasPJ26))||(v==='BW'&&(hasBW25||hasBW26));
+    if(!hasSome)return;
+    labels.push(MS[i]);dBudget.push(flatBudget);
+    if(v==='BT'){
+      if(hasBT25)c25+=STATE.bt25[m]; dComb25.push(+(c25/1e6).toFixed(3));
+      if(hasBT26){c26+=STATE.bt26[m];dComb26.push(+(c26/1e6).toFixed(3));}else dComb26.push(null);
+    }else if(v==='PJ'){
+      if(hasPJ25)c25+=STATE.pj25[m]; dComb25.push(+(c25/1e6).toFixed(3));
+      if(hasPJ26){c26+=STATE.pj26[m];dComb26.push(+(c26/1e6).toFixed(3));}else dComb26.push(null);
+    }else if(v==='BW'){
+      if(hasBW25)c25+=(STATE.bw25||{})[m]; dComb25.push(+(c25/1e6).toFixed(3));
+      if(hasBW26){c26+=(STATE.bw26||{})[m];dComb26.push(+(c26/1e6).toFixed(3));}else dComb26.push(null);
+    }else{
+      c25+=(STATE.bt25[m]||0)+(STATE.pj25[m]||0)+((STATE.bw25||{})[m]||0);dComb25.push(+(c25/1e6).toFixed(3));
+      if(hasBT26){cBT+=STATE.bt26[m];dBT26.push(+(cBT/1e6).toFixed(3));}else dBT26.push(null);
+      if(hasPJ26){cPJ+=STATE.pj26[m];dPJ26.push(+(cPJ/1e6).toFixed(3));}else dPJ26.push(null);
+      if(hasBT26||hasPJ26||hasBW26){c26+=(STATE.bt26[m]||0)+(STATE.pj26[m]||0)+((STATE.bw26||{})[m]||0);dComb26.push(+(c26/1e6).toFixed(3));}else dComb26.push(null);
+    }
+  });
+  let datasets,legendHTML;
+  if(v==='combined'){
+    datasets=[
+      {label:'Pro-Grade 2026',data:dComb26,borderColor:'#7C3AED',backgroundColor:'rgba(124,58,237,0.07)',pointRadius:4,pointBackgroundColor:'#7C3AED',tension:0.35,fill:true,borderWidth:2.5,spanGaps:false},
+      {label:'Pro-Grade 2025',data:dComb25,borderColor:'#94A3B8',borderDash:[5,4],backgroundColor:'transparent',pointRadius:3,tension:0.35},
+      {label:'Annual budget',data:dBudget,borderColor:'#E24B4A',borderDash:[6,4],pointRadius:0,backgroundColor:'transparent',borderWidth:2},
+    ];
+    legendHTML=`<span><span class="ld" style="background:#7C3AED"></span>2026</span><span><span class="ld" style="background:#94A3B8"></span>2025</span><span><span class="ld-dash" style="border-color:#E24B4A"></span>Budget</span>`;
+    document.getElementById('trend-title').textContent='Pro-Grade — cumulative monthly ($M)';
+  }else{
+    const col=v==='BT'?'#2563EB':v==='PJ'?'#059669':'#DC6803';
+    const vLabel=v==='BW'?'B-Wise':v;
+    datasets=[
+      {label:vLabel+' 2026',data:dComb26,borderColor:col,backgroundColor:col+'14',pointRadius:4,pointBackgroundColor:col,tension:0.35,fill:true,borderWidth:2.5,spanGaps:false},
+      {label:vLabel+' 2025',data:dComb25,borderColor:'#94A3B8',borderDash:[5,4],backgroundColor:'transparent',pointRadius:3,tension:0.35},
+      {label:'Annual budget',data:dBudget,borderColor:'#E24B4A',borderDash:[6,4],pointRadius:0,backgroundColor:'transparent',borderWidth:2},
+    ];
+    legendHTML=`<span><span class="ld" style="background:${col}"></span>${vLabel} 2026</span><span><span class="ld" style="background:#94A3B8"></span>${vLabel} 2025</span><span><span class="ld-dash" style="border-color:#E24B4A"></span>Budget</span>`;
+    document.getElementById('trend-title').textContent=(v==='BW'?'B-Wise':v+' Trailers')+' — cumulative monthly ($M)';
+  }
+  document.getElementById('trend-legend').innerHTML=legendHTML;
+  destroyChart('trend');
+  charts.trend=new Chart(document.getElementById('trendChart'),{
+    type:'line',data:{labels,datasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:c=>c.raw!=null?' '+c.dataset.label+': '+(c.raw<0?'−':'+')+' $'+Math.abs(c.raw).toFixed(2)+'M':null}}},
+      scales:{x:{grid:{color:gc},ticks:{color:tc,font:{size:11}}},y:{grid:{color:gc},ticks:{color:tc,font:{size:11},callback:v=>'$'+v+'M'}}}}
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// TABLE
+// ═══════════════════════════════════════════════════════
+function renderTable() {
+  const v=VIEW;
+  const allM=MONTHS.filter(m=>STATE.bt26[m]!=null||STATE.pj26[m]!=null||(STATE.bw26||{})[m]!=null);
+  let hdr,rows,tot;
+  if(v==='combined'){
+    document.getElementById('table-title').textContent='Monthly actuals — Pro-Grade combined ($)';
+    hdr=`<tr><th>Month</th><th class="r">Pro-Grade 2025</th><th class="r">Pro-Grade 2026</th><th class="r">YoY Change</th></tr>`;
+    rows=allM.map(m=>{
+      const b5=STATE.bt25[m],b6=STATE.bt26[m],p5=STATE.pj25[m],p6=STATE.pj26[m],w5=(STATE.bw25||{})[m],w6=(STATE.bw26||{})[m];
+      const c5=(b6!=null?(b5||0):0)+(p6!=null?(p5||0):0)+(w6!=null?(w5||0):0);
+      const c6=(b6!=null||p6!=null||w6!=null)?((b6||0)+(p6||0)+(w6||0)):null;
+      const chg=(c5!=null&&c6!=null)?c6-c5:null;
+      return`<tr><td><strong>${m}</strong></td><td class="r ${nc(c5)}">${fmtFull(c5)}</td><td class="r ${nc(c6)}">${c6!=null?fmtFull(c6):'—'}</td><td class="r ${nc(chg)}">${chg!=null?fmtFull(chg):'—'}</td></tr>`;
+    }).join('');
+    const tb5=Object.keys(STATE.bt26).reduce((a,m)=>a+(STATE.bt25[m]||0),0)+Object.keys(STATE.pj26).reduce((a,m)=>a+(STATE.pj25[m]||0),0)+Object.keys(STATE.bw26||{}).reduce((a,m)=>a+((STATE.bw25||{})[m]||0),0);
+    const tb6=sumObj(STATE.bt26)+sumObj(STATE.pj26)+sumObj(STATE.bw26||{});
+    tot=`<tr><td>YTD Total</td><td class="r ${nc(tb5)}">${fmtFull(tb5)}</td><td class="r ${nc(tb6)}">${fmtFull(tb6)}</td><td class="r ${nc(tb6-tb5)}">${fmtFull(tb6-tb5)}</td></tr>`;
+  }else{
+    const y5=v==='BT'?STATE.bt25:v==='PJ'?STATE.pj25:(STATE.bw25||{});
+    const y6=v==='BT'?STATE.bt26:v==='PJ'?STATE.pj26:(STATE.bw26||{});
+    const sp25m=Object.keys(y6);
+    const vLabel=v==='BW'?'B-Wise':v;
+    document.getElementById('table-title').textContent=`Monthly actuals — ${vLabel}${v==='BW'?'':' Trailers'} ($)`;
+    hdr=`<tr><th>Month</th><th class="r">${vLabel} 2025</th><th class="r">${vLabel} 2026</th><th class="r">YoY Change</th></tr>`;
+    rows=allM.filter(m=>y6[m]!=null).map(m=>{
+      const a=y5[m],b=y6[m],chg=(a!=null&&b!=null)?b-a:null;
+      return`<tr><td><strong>${m}</strong></td><td class="r ${nc(a)}">${a!=null?fmtFull(a):'—'}</td><td class="r ${nc(b)}">${b!=null?fmtFull(b):'—'}</td><td class="r ${nc(chg)}">${chg!=null?fmtFull(chg):'—'}</td></tr>`;
+    }).join('');
+    const t5=sp25m.reduce((a,m)=>a+(y5[m]||0),0),t6=sumObj(y6);
+    tot=`<tr><td>YTD Total</td><td class="r ${nc(t5)}">${fmtFull(t5)}</td><td class="r ${nc(t6)}">${fmtFull(t6)}</td><td class="r ${nc(t6-t5)}">${fmtFull(t6-t5)}</td></tr>`;
+  }
+  document.getElementById('mom-table').innerHTML=`<thead>${hdr}</thead><tbody>${rows}${tot}</tbody>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// WEEK RANKED TABLE
+// ═══════════════════════════════════════════════════════
+function renderWeekCards() {
+  const v=VIEW;
+  let locs,total;
+  if(v==='combined'){locs=[...STATE.btLocs,...STATE.pjLocs,...(STATE.bwLocs||[])];total=STATE.btWkTotal+STATE.pjWkTotal+(STATE.bwWkTotal||0);document.getElementById('wk-title').textContent=`Week — all locations (BT Wk ${STATE.btWk} · PJ Wk ${STATE.pjWk} · BW Wk ${STATE.bwWk||'—'})`;}
+  else if(v==='BT'){locs=STATE.btLocs;total=STATE.btWkTotal;document.getElementById('wk-title').textContent=`BT Week ${STATE.btWk} — locations ($)`;}
+  else if(v==='PJ'){locs=STATE.pjLocs;total=STATE.pjWkTotal;document.getElementById('wk-title').textContent=`PJ Week ${STATE.pjWk} — locations ($)`;}
+  else{locs=STATE.bwLocs||[];total=STATE.bwWkTotal||0;document.getElementById('wk-title').textContent=`B-Wise Week ${STATE.bwWk||'—'} — location ($)`;}
+  locs=[...locs].sort((a,b)=>a.val-b.val);
+  const netTotal=locs.reduce((a,l)=>a+l.val,0)||1;
+  const maxAbs=Math.max(...locs.map(l=>Math.abs(l.val)))||1;
+  const rows=locs.map(l=>{
+    const pct=(l.val/Math.abs(netTotal)*100).toFixed(1);
+    const buColor=l.bu==='BT'?'#2563EB':l.bu==='PJ'?'#059669':'#DC6803';
+    const valColor=l.val<0?'#B91C1C':'#166534';
+    const barColor=l.val<0?'#FCA5A5':'#86EFAC';
+    const barAccent=l.val<0?'#B91C1C':'#166534';
+    const pctOfMax=(Math.abs(l.val)/maxAbs*50);
+    const leftPct=l.val<0?(50-pctOfMax):50;
+    return`<tr><td style="font-weight:500">${l.name}</td>
+      <td><span style="font-size:.68rem;font-weight:600;color:${buColor};background:${buColor}18;padding:2px 6px;border-radius:10px">${l.bu}</span></td>
+      <td class="r" style="font-weight:600;color:${valColor}">${fmtFull(l.val)}</td>
+      <td class="r" style="color:${valColor};font-weight:500">${pct}%</td>
+      <td><div class="spark-track"><div class="spark-center"></div><div class="spark-fill" style="left:${leftPct}%;width:${pctOfMax}%;background:${barColor};border:1px solid ${barAccent}"></div></div></td>
+    </tr>`;
+  });
+  const totalColor=total<0?'#B91C1C':'#166534';
+  rows.push(`<tr><td style="font-weight:700">Week Total</td><td><span style="font-size:.68rem;font-weight:600;color:#64748B;background:#F1F5F9;padding:2px 6px;border-radius:10px">${v==='combined'?'BT+PJ+BW':v==='BW'?'B-Wise':v}</span></td><td class="r" style="font-weight:700;color:${totalColor}">${fmtFull(total)}</td><td class="r" style="color:#64748B">100%</td><td></td></tr>`);
+  document.getElementById('wk-tbody').innerHTML=rows.join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// ACTUAL VS BUDGET CHART
+// ═══════════════════════════════════════════════════════
+function renderLocChart() {
+  const v=VIEW;
+  const y25=get25(v),y26=get26(v);
+  const BT_BUDGET={January:-0.15,February:-0.17,March:-0.19,April:-0.21,May:-0.19,June:-0.20,July:-0.20,August:-0.19,September:-0.18,October:-0.18,November:-0.16,December:-0.16};
+  const PJ_BUDGET={January:-0.07,February:-0.38,March:-0.72,April:-0.61,May:-0.58,June:-0.63,July:-0.49,August:-0.56,September:-0.77,October:0.07,November:-0.69,December:-0.29};
+  const BW_BUDGET = (STATE.locMoM && STATE.locMoM['B-Wise'] && STATE.locMoM['B-Wise'].budget) ? STATE.locMoM['B-Wise'].budget : {};
+  const PG_BUDGET={};MONTHS.forEach(m=>{PG_BUDGET[m]=(BT_BUDGET[m]||0)+(PJ_BUDGET[m]||0)+(BW_BUDGET[m]||0);});
+  const budgetMap=v==='BT'?BT_BUDGET:v==='PJ'?PJ_BUDGET:v==='BW'?BW_BUDGET:PG_BUDGET;
+  const allM=MONTHS.filter(m=>y25[m]!=null||budgetMap[m]!=null);
+  const labels=allM.map(m=>m.slice(0,3));
+  const d25=allM.map(m=>y25[m]!=null?+(y25[m]/1e6).toFixed(3):null);
+  const d26=allM.map(m=>y26[m]!=null?+(y26[m]/1e6).toFixed(3):null);
+  const dBudget=allM.map(m=>budgetMap[m]??null);
+  const act26Color=v==='BT'?'#2563EB':v==='PJ'?'#059669':v==='BW'?'#DC6803':'#7C3AED';
+  document.getElementById('loc-title').textContent='Actual vs. Budget';
+  document.getElementById('loc-legend').innerHTML=`<span><span class="ld" style="background:#64748B"></span>2025 MoM</span><span><span class="ld" style="background:${act26Color}"></span>2026 MoM</span><span><span class="ld-dash" style="border-color:#F59E0B"></span>2026 Budget</span>`;
+  destroyChart('loc');
+  charts.loc=new Chart(document.getElementById('locChart'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {type:'bar',label:'2025 MoM',data:d25,backgroundColor:'#64748BAA',borderColor:'#64748B',borderWidth:1,borderRadius:2,yAxisID:'y'},
+      {type:'bar',label:'2026 MoM',data:d26,backgroundColor:d26.map((vv,i)=>vv!=null&&dBudget[i]!=null&&vv<dBudget[i]?'#EF4444BB':act26Color+'BB'),borderColor:d26.map((vv,i)=>vv!=null&&dBudget[i]!=null&&vv<dBudget[i]?'#B91C1C':act26Color),borderWidth:1,borderRadius:2,yAxisID:'y'},
+      {type:'line',label:'2026 Budget',data:dBudget,borderColor:'#F59E0B',borderDash:[6,4],borderWidth:2,pointRadius:4,pointBackgroundColor:'#F59E0B',pointBorderColor:'#fff',pointBorderWidth:1.5,backgroundColor:'transparent',yAxisID:'y'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:c=>{if(c.raw==null)return null;const s=c.raw<0?'−':'+';return` ${c.dataset.label}: ${s}$${Math.abs(c.raw).toFixed(0)}M`;}}}},
+      scales:{x:{grid:{display:false},ticks:{color:'#555',font:{size:11}}},y:{grid:{color:gc},ticks:{color:tc,font:{size:11},callback:v=>(v<0?'($':'$')+Math.abs(v).toFixed(0)+'M'+(v<0?')':'')},afterDataLimits:axis=>{if(axis.max<0.05)axis.max=0.05;}}}},
+    plugins:[{id:'barLabels',afterDatasetsDraw(chart){
+      const ctx=chart.ctx;ctx.save();
+      chart.getDatasetMeta(1).data.forEach((bar,i)=>{
+        const val=d26[i];if(val==null||val===0)return;
+        const bgt=dBudget[i];const overBgt=bgt!=null&&val<bgt;
+        const absVal=Math.abs(val);
+        const label=absVal>=1?'($'+absVal.toFixed(0)+'M)':'($'+Math.round(absVal*1000)+'K)';
+        ctx.font='bold 9px -apple-system,sans-serif';ctx.fillStyle=overBgt?'#B91C1C':'#166534';
+        ctx.textAlign='center';ctx.textBaseline=val<0?'top':'bottom';
+        ctx.fillText(label,bar.x,val<0?bar.y+3:bar.y-3);
+      });ctx.restore();
+    }}]
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// LOCATION PAGES
+// ═══════════════════════════════════════════════════════
+function renderLocationPages() {
+  // Destroy any existing location charts first
+  Object.keys(charts).forEach(id => {
+    if(id.startsWith('chart-')) { try{charts[id].destroy();}catch(e){} delete charts[id]; }
+  });
+  Object.entries(LOCATIONS).forEach(([pageId, loc]) => {
+    const container = document.getElementById('page-'+pageId);
+    if(!container) return;
+    container.innerHTML = ''; // clear stale content
+    buildLocationPage(container, pageId, loc);
+  });
+}
+
+function buildLocationPage(container, pageId, loc) {
+  const lm = STATE.locMoM[loc.key] || {};
+  const budget26 = lm.budget || {};
+  const mom25 = lm.mom25 || {};
+  const mom26 = lm.mom26 || {};
+
+  // Get category data
+  const catData = loc.bu==='BT' ? (STATE.btCats[loc.catKey]||[]) : loc.bu==='PJ' ? (STATE.pjCats[loc.catKey]||[]) : ((STATE.bwCats||{})[loc.catKey]||[]);
+
+  // YTD calcs
+  const ytd26 = parseFloat(Object.values(mom26).reduce((a,b)=>a+b,0).toFixed(4));
+  const sp25months = Object.keys(mom26);
+  const ytd25sp = parseFloat(sp25months.reduce((a,m)=>a+(mom25[m]||0),0).toFixed(4));
+  const ytdBudget = parseFloat(sp25months.reduce((a,m)=>a+(budget26[m]||0),0).toFixed(4));
+  const vsBgt = ytd26 - ytdBudget;
+  const yoy = ytd25sp!==0 ? ((ytd26-ytd25sp)/Math.abs(ytd25sp)*100) : 0;
+  const lastMonth = sp25months[sp25months.length-1] || '—';
+  const wkLoc = [...STATE.btLocs,...STATE.pjLocs,...(STATE.bwLocs||[])].find(l=>l.name===loc.name)||{val:0};
+  const wkNum = loc.bu==='BT'?STATE.btWk:loc.bu==='PJ'?STATE.pjWk:(STATE.bwWk||'—');
+  const buLabel = loc.bu==='BW' ? 'B-Wise' : loc.bu+' Trailers';
+
+  // Build HTML
+  container.innerHTML = `
+    <div class="page-header">
+      <div>
+        <div class="page-title">${loc.name}</div>
+        <div class="page-sub">${buLabel} · YTD 2026 through ${lastMonth}</div>
+      </div>
+      <div class="page-date" style="font-size:.72rem;color:var(--muted);text-align:right">
+        <span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:.7rem;font-weight:600;color:#fff;background:${loc.color}">${loc.bu}</span>
+      </div>
+    </div>
+
+    <div class="kpi-row-4">
+      <div class="kpi"><div class="kpi-lbl">YTD 2026</div><div class="kpi-val ${kc(ytd26)}">${fmtM(ytd26)}</div><div class="kpi-sub">${fmtM(ytd25sp)} in 2025</div></div>
+      <div class="kpi"><div class="kpi-lbl">vs YTD Budget</div><div class="kpi-val ${kc(vsBgt)}">${fmtM(vsBgt)}</div><div class="kpi-sub">Budget: ${fmtM(ytdBudget)}</div></div>
+      <div class="kpi"><div class="kpi-lbl">YoY Change</div><div class="kpi-val ${yoy>=0?'pos':'neg'}">${Math.abs(yoy).toFixed(1)}%</div><div class="kpi-sub">${yoy>=0?'better':'worse'} vs same period 2025</div></div>
+      <div class="kpi"><div class="kpi-lbl">Current week</div><div class="kpi-val ${kc(wkLoc.val)}">${fmtFull(wkLoc.val)}</div><div class="kpi-sub">Week ${wkNum}</div></div>
+    </div>
+
+    <div class="sec">Monthly actual vs budget</div>
+    <div class="grid g1">
+      <div class="chart-card">
+        <div class="ct">${loc.name} — monthly actuals vs budget ($M)</div>
+        <div class="cs">2025 MoM vs 2026 MoM vs monthly budget</div>
+        <div class="legend">
+          <span><span class="ld" style="background:#64748B"></span>2025 MoM</span>
+          <span><span class="ld" style="background:${loc.color}"></span>2026 MoM</span>
+          <span><span class="ld-dash" style="border-color:#F59E0B"></span>Budget</span>
+        </div>
+        <div style="position:relative;height:260px"><canvas id="chart-${pageId}"></canvas></div>
+      </div>
+    </div>
+
+    <div class="sec">YTD adjustment category breakdown</div>
+    <div class="grid g1">
+      <div class="chart-card">
+        <div class="ct">${loc.name} — adjustments by category ($)</div>
+        <div class="cs">YTD 2026 · Sorted largest unfavorable to largest favorable</div>
+        <div id="cattbl-${pageId}" style="margin-top:.4rem;overflow-x:auto"></div>
+      </div>
+    </div>
+
+    <div class="footer">Pro-Grade Manufacturing · ${loc.name} · Confidential</div>
+  `;
+
+  // Render MoM chart for this location
+  setTimeout(()=>{
+    const allM = MONTHS.filter(m=>mom25[m]!=null||budget26[m]!=null);
+    const labels = allM.map(m=>m.slice(0,3));
+    const d25 = allM.map(m=>mom25[m]!=null?parseFloat(mom25[m].toFixed(4)):null);
+    const d26 = allM.map(m=>mom26[m]!=null?parseFloat(mom26[m].toFixed(4)):null);
+    const dB  = allM.map(m=>budget26[m]!=null?parseFloat(budget26[m].toFixed(4)):null);
+
+    const canvasId = 'chart-'+pageId;
+    destroyChart(canvasId);
+    const canvas = document.getElementById(canvasId);
+    if(!canvas) return;
+
+    charts[canvasId] = new Chart(canvas, {
+      type:'bar',
+      data:{labels,datasets:[
+        {type:'bar',label:'2025 MoM',data:d25,backgroundColor:'#64748BAA',borderColor:'#64748B',borderWidth:1,borderRadius:2,yAxisID:'y'},
+        {type:'bar',label:'2026 MoM',data:d26,backgroundColor:d26.map((vv,i)=>vv!=null&&dB[i]!=null&&vv<dB[i]?'#EF4444BB':loc.color+'BB'),borderColor:d26.map((vv,i)=>vv!=null&&dB[i]!=null&&vv<dB[i]?'#B91C1C':loc.color),borderWidth:1,borderRadius:2,yAxisID:'y'},
+        {type:'line',label:'Budget',data:dB,borderColor:'#F59E0B',borderDash:[6,4],borderWidth:2,pointRadius:4,pointBackgroundColor:'#F59E0B',pointBorderColor:'#fff',pointBorderWidth:1.5,backgroundColor:'transparent',yAxisID:'y'},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:c=>{if(c.raw==null)return null;const s=c.raw<0?'−':'+';const a=Math.abs(c.raw);if(a<0.1)return` ${c.dataset.label}: ${s}$${Math.round(a*1000)}K`;return` ${c.dataset.label}: ${s}$${a.toFixed(2)}M`;}}}},
+        scales:{x:{grid:{display:false},ticks:{color:'#555',font:{size:11}}},y:{grid:{color:gc},ticks:{color:tc,font:{size:11},callback:v=>{const a=Math.abs(v);if(a===0)return '$0';if(a<0.1)return (v<0?'-':'')+'$'+Math.round(a*1000)+'K';return (v<0?'-':'')+'$'+a.toFixed(2)+'M';}},afterDataLimits:ax=>{if(ax.max<0.01)ax.max=0.01;}}}
+      }
+    });
+
+    // Category table
+    const catTblEl = document.getElementById('cattbl-'+pageId);
+    if(catTblEl && catData.length>0){
+      const sorted = catData.filter(c=>c.cat!=='Grand Total').sort((a,b)=>a.val-b.val);
+      const grandTotal = catData.find(c=>c.cat==='Grand Total');
+      const maxAbsCat = Math.max(...sorted.map(c=>Math.abs(c.val)))||1;
+      let tbl = `<table class="cat-tbl"><thead><tr><th>Category</th><th class="r">Amount ($)</th><th style="width:140px">Impact</th></tr></thead><tbody>`;
+      sorted.forEach(c=>{
+        const barW=(Math.abs(c.val)/maxAbsCat*100).toFixed(1);
+        const barColor=c.val<0?'#FCA5A5':'#86EFAC';
+        const barAccent=c.val<0?'#B91C1C':'#166534';
+        tbl+=`<tr><td>${c.cat}</td><td class="r ${nc(c.val)}">${fmtFull(c.val)}</td>
+          <td><div style="background:#F1F5F9;border-radius:3px;height:6px;width:120px;display:inline-block;vertical-align:middle;position:relative">
+            <div style="position:absolute;${c.val<0?'right':'left'}:${c.val<0?0:0}px;width:${barW}%;height:6px;background:${barColor};border:1px solid ${barAccent};border-radius:3px"></div>
+          </div></td></tr>`;
+      });
+      if(grandTotal){tbl+=`<tr><td><strong>YTD Total</strong></td><td class="r ${nc(grandTotal.val)}"><strong>${fmtFull(grandTotal.val)}</strong></td><td></td></tr>`;}
+      tbl+=`</tbody></table>`;
+      catTblEl.innerHTML=tbl;
+    } else if(catTblEl){
+      catTblEl.innerHTML=`<p style="font-size:.78rem;color:var(--muted);padding:.5rem">No category data available for this location.</p>`;
+    }
+  }, 100);
+}
+
+// ═══════════════════════════════════════════════════════
+// SAVE WITH DATA
+// ═══════════════════════════════════════════════════════
+function saveWithData() {
+  const btn=document.getElementById('save-btn');
+  btn.textContent='⏳ Saving…';btn.style.opacity='0.6';
+  setTimeout(()=>{
+    let html=document.documentElement.outerHTML;
+    const wkNum=document.getElementById('wk-badge').textContent;
+    const savedDate=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    const stateJson=JSON.stringify(STATE);
+    const autoLoad='<scr'+'ipt id="embedded-data-block">window.__EMBEDDED_STATE='+stateJson+';'+'<'+'/sc'+'ript>';
+    html=html.replace(new RegExp('<scr'+'ipt id="embedded-data-block">[\\s\\S]*?<\\/sc'+'ript>'),'');
+    html=html.replace('<'+'/'+'body>',autoLoad+'<'+'/'+'body>');
+    const blob=new Blob([html],{type:'text/html'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='PG_Live_Dashboard.html';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+    btn.textContent='⬇ Save with data';btn.style.opacity='1';
+  },300);
+}
+</script>
+
+<script id="embedded-data-block">
+(function(){
+  try {
+    window.__EMBEDDED_STATE = JSON.parse(atob("eyJidDI1IjogeyJKYW51YXJ5IjogLTEyNTYxMS41OSwgIkZlYnJ1YXJ5IjogLTQ4Njg5OC4xNywgIk1hcmNoIjogLTE4MDY3MC40OSwgIkFwcmlsIjogLTQ0MjU4LjM4LCAiTWF5IjogLTE3MDQyNC4wOCwgIkp1bmUiOiAtMjE3Nzk0LjQ3MDAwMDAwMDIsICJKdWx5IjogLTIzMzg5Mi4xNywgIkF1Z3VzdCI6IC0xNTgzODYuODgsICJTZXB0ZW1iZXIiOiAtMjEwMzU1LjUyLCAiT2N0b2JlciI6IC01NjM4Mi4xNiwgIk5vdmVtYmVyIjogLTg4OTcyLjQxLCAiRGVjZW1iZXIiOiAtMzk5MzUuODh9LCAiYnQyNiI6IHsiSmFudWFyeSI6IC0xMTM3MzMuNjMsICJGZWJydWFyeSI6IC0zNDAyNS4wMiwgIk1hcmNoIjogLTMyNDE0LjA4LCAiQXByaWwiOiAtMTg4ODEwLjk2OTk5OTk5OTk3LCAiTWF5IjogLTIyMjEuMTcsICJKdW5lIjogLTM2OTM0LjF9LCAicGoyNSI6IHsiSmFudWFyeSI6IC0zODA5NDIuMzYsICJGZWJydWFyeSI6IC01MDUxNDcuMjkwMDAwMDAwMDQsICJNYXJjaCI6IC0zMjQwMDIuMzcwMDAwMDAwMSwgIkFwcmlsIjogLTI0MzA1NS4zLCAiTWF5IjogLTQzMzA4OC41OSwgIkp1bmUiOiAtNTEwNDMzLjQxLCAiSnVseSI6IC02NDgxNzAuODcsICJBdWd1c3QiOiAtMjEwMTcyNy4xNCwgIlNlcHRlbWJlciI6IC03Nzg3MzguNDQsICJPY3RvYmVyIjogLTY0MDcwOS4yMywgIk5vdmVtYmVyIjogMTM3ODQ0LjMyLCAiRGVjZW1iZXIiOiAtNjUxMzc5Ljc5fSwgInBqMjYiOiB7IkphbnVhcnkiOiAtNzI3NTE5LjE3LCAiRmVicnVhcnkiOiAtNzU5Mjg4LjQ1LCAiTWFyY2giOiAtMjQwNTIyLjkxLCAiQXByaWwiOiAtMzgyMTY5LjgsICJNYXkiOiAtMTI0MzA3Ljg5LCAiSnVuZSI6IC0yNjAzMjEuNjR9LCAiYncyNSI6IHsiSmFudWFyeSI6IDE5MjI5LjU3MDg0Njg4MDAxLCAiRmVicnVhcnkiOiAtNDAwODkuMzg2NTM0MjgwMDIsICJNYXJjaCI6IC0yODUwMy4yNTQ4NTUxLCAiQXByaWwiOiAtNDY2MzAuOTQ3MjM4NzUwMDM1LCAiTWF5IjogLTIzNjYxLjQyMjYxMjE4MDAxLCAiSnVuZSI6IC0zNTUzMS43NTI4ODE1MTk5OSwgIkp1bHkiOiAtMzQ2NjAuMjUxMjk5MDI5OTk1LCAiQXVndXN0IjogLTI1ODg2LjU0OTQ5OTM4MDAwMiwgIlNlcHRlbWJlciI6IC0zNDA2MS44OTk1MjQ5OTAwMSwgIk9jdG9iZXIiOiAwLjAsICJOb3ZlbWJlciI6IC04MTkyLjQwMDczNjk4LCAiRGVjZW1iZXIiOiAtMjQ3NzAuNzIyODk2NTIwMDF9LCAiYncyNiI6IHsiSmFudWFyeSI6IC0zMTU3Mi40NjgwODI1NjAwMiwgIkZlYnJ1YXJ5IjogLTMzOTM4LjA1MTMxOTQxLCAiTWFyY2giOiAtNTYzOTMuNjgyNzYxNTM5OTgsICJBcHJpbCI6IC03NTU5Ny44NDM4OTA1Mjk5OCwgIk1heSI6IC0xODUxMi42NDg3MzQ2MDAwMDMsICJKdW5lIjogLTUxODkyLjM2NDYyODMzOTk4fSwgImJ0V2siOiAyNiwgInBqV2siOiAyNiwgImJ3V2siOiAyNiwgImJ0TG9jcyI6IFt7Im5hbWUiOiAiQmF0YXZpYSIsICJ2YWwiOiAtMTA2OTkuNjcsICJidSI6ICJCVCJ9LCB7Im5hbWUiOiAiTWFkaWxsIiwgInZhbCI6IC01NDUuNTgsICJidSI6ICJCVCJ9LCB7Im5hbWUiOiAiTXQgUGxlYXNhbnQiLCAidmFsIjogMTk5MDguMzIsICJidSI6ICJCVCJ9LCB7Im5hbWUiOiAiTXQgUGxlYXNhbnQgLSBSZXRhaWwiLCAidmFsIjogNjU1MS40NCwgImJ1IjogIkJUIn0sIHsibmFtZSI6ICJXaWxscyBQb2ludCIsICJ2YWwiOiAtMjc1Ni4xLCAiYnUiOiAiQlQifV0sICJwakxvY3MiOiBbeyJuYW1lIjogIk1leGNpbyIsICJ2YWwiOiAtMjQyODUuNTUsICJidSI6ICJQSiJ9LCB7Im5hbWUiOiAiTXQgT3JhYiIsICJ2YWwiOiA2ODc4LjgyLCAiYnUiOiAiUEoifSwgeyJuYW1lIjogIlN1bW5lciIsICJ2YWwiOiA2NjM5LjcyLCAiYnUiOiAiUEoifSwgeyJuYW1lIjogIlN1bW5lciAtIFJldGFpbCIsICJ2YWwiOiA3NTMzLjQ1LCAiYnUiOiAiUEoifV0sICJid0xvY3MiOiBbeyJuYW1lIjogIkItV2lzZSIsICJ2YWwiOiAtMTE1OTAuMjc4MjUxMjM5OTk5LCAiYnUiOiAiQlcifV0sICJidFdrVG90YWwiOiAxMjQ1OC40MSwgInBqV2tUb3RhbCI6IC0zMjMzLjU2LCAiYndXa1RvdGFsIjogLTExNTkwLjI3ODI1MTIzOTk5OSwgImJ0QnVkZ2V0IjogLTIuMTcsICJwakJ1ZGdldCI6IC01LjczLCAiYndCdWRnZXQiOiAtMC4zNTI0MzUsICJsb2NNb00iOiB7IkJUIEFsbCBMb2MiOiB7ImJ1ZGdldCI6IHsiSmFudWFyeSI6IC0wLjE1MTkwNTc1MDgyMzk1OTEzLCAiRmVicnVhcnkiOiAtMC4xNzM1MjYzOTk2OTk0NSwgIk1hcmNoIjogLTAuMTg4NDQ1NzYzNTY2Njc4MzYsICJBcHJpbCI6IC0wLjIwNjM1NzIzOTIwMjU5OTY4LCAiTWF5IjogLTAuMTg3NDg0OTM2NjQyMzU2OTQsICJKdW5lIjogLTAuMjAxMzY3MTgzODIxMTYyOCwgIkp1bHkiOiAtMC4xOTk2Mjk0MDA0MTIyNTUzLCAiQXVndXN0IjogLTAuMTg3NTk1OTE3NDE4MjQ0MzMsICJTZXB0ZW1iZXIiOiAtMC4xODAwODk1MzE3MzcwODA4NCwgIk9jdG9iZXIiOiAtMC4xNzU1MDA0NTYwODg5Mjk4LCAiTm92ZW1iZXIiOiAtMC4xNTcyNzkyODM1NzE4NDg4LCAiRGVjZW1iZXIiOiAtMC4xNTkyNjk5Mjk4MzQ3MDUyNX0sICJtb20yNSI6IHsiSmFudWFyeSI6IC0wLjEyNTYxMTU5LCAiRmVicnVhcnkiOiAtMC40ODY4OTgxNjk5OTk5OTk5NiwgIk1hcmNoIjogLTAuMTgwNjcwNDksICJBcHJpbCI6IC0wLjA0NDI1ODM4LCAiTWF5IjogLTAuMTcwNDI0MDc5OTk5OTk5OTgsICJKdW5lIjogLTAuMjE3Nzk0NDcwMDAwMDAwMiwgIkp1bHkiOiAtMC4yMzM4OTIxNywgIkF1Z3VzdCI6IC0wLjE1ODM4Njg4LCAiU2VwdGVtYmVyIjogLTAuMjEwMzU1NTIsICJPY3RvYmVyIjogLTAuMDU2MzgyMTYsICJOb3ZlbWJlciI6IC0wLjA4ODk3MjQxLCAiRGVjZW1iZXIiOiAtMC4wMzk5MzU4OH0sICJtb20yNiI6IHsiSmFudWFyeSI6IC0wLjExMzczMzYzLCAiRmVicnVhcnkiOiAtMC4wMzQwMjUwMTk5OTk5OTk5OTYsICJNYXJjaCI6IC0wLjAzMjQxNDA4MDAwMDAwMDAwNSwgIkFwcmlsIjogLTAuMTg4ODEwOTY5OTk5OTk5OTcsICJNYXkiOiAtMC4wMDIyMjExN319LCAiTWFkaWxsIjogeyJidWRnZXQiOiB7IkphbnVhcnkiOiAtMC4wMTgyMjksICJGZWJydWFyeSI6IC0wLjAyMDgyMywgIk1hcmNoIjogLTAuMDIyNjEzLCAiQXByaWwiOiAtMC4wMjQ3NjMsICJNYXkiOiAtMC4wMjI0OTgsICJKdW5lIjogLTAuMDI0MTY0LCAiSnVseSI6IC0wLjAyMzk1NiwgIkF1Z3VzdCI6IC0wLjAyMjUxMiwgIlNlcHRlbWJlciI6IC0wLjAyMTYxMSwgIk9jdG9iZXIiOiAtMC4wMjEwNiwgIk5vdmVtYmVyIjogLTAuMDE4ODc0LCAiRGVjZW1iZXIiOiAtMC4wMTkxMTJ9LCAibW9tMjUiOiB7IkphbnVhcnkiOiAwLjAxNDM4NzcwMDAwMDAwMDAwMiwgIkZlYnJ1YXJ5IjogLTAuMTUxNTU2ODQsICJNYXJjaCI6IC0wLjA1Mzg2OTc4LCAiQXByaWwiOiAwLjA3MTc1NTI0MDAwMDAwMDAxLCAiTWF5IjogLTAuMDEyMzEwNDQsICJKdW5lIjogLTAuMDM3OTc3ODMwMDAwMDAwMDA0fSwgIm1vbTI2IjogeyJKYW51YXJ5IjogLTAuMDUzMDM5MTQsICJGZWJydWFyeSI6IC0wLjAxNDIxMDU0LCAiTWFyY2giOiAwLjAyNzcxODIwMDAwMDAwMDAwMiwgIkFwcmlsIjogLTAuMDgyNzQwOTYwMDAwMDAwMDYsICJNYXkiOiAtMC4wMTg5NjI3OSwgIkp1bmUiOiAwLjAxNjUzODIwOTk5OTk5OTk5OH19LCAiTXQgUGxlYXNhbnQiOiB7ImJ1ZGdldCI6IHsiSmFudWFyeSI6IC0wLjA4MDUxLCAiRmVicnVhcnkiOiAtMC4wOTE5NjksICJNYXJjaCI6IC0wLjA5OTg3NiwgIkFwcmlsIjogLTAuMTA5MzY5LCAiTWF5IjogLTAuMDk5MzY3LCAiSnVuZSI6IC0wLjEwNjcyNSwgIkp1bHkiOiAtMC4xMDU4MDQsICJBdWd1c3QiOiAtMC4wOTk0MjYsICJTZXB0ZW1iZXIiOiAtMC4wOTU0NDcsICJPY3RvYmVyIjogLTAuMDkzMDE1LCAiTm92ZW1iZXIiOiAtMC4wODMzNTgsICJEZWNlbWJlciI6IC0wLjA4NDQxM30sICJtb20yNSI6IHsiSmFudWFyeSI6IC0wLjAzODUyNTU5LCAiRmVicnVhcnkiOiAtMC4xMDc4OTc0MiwgIk1hcmNoIjogLTAuMDMzOTQ3NjcsICJBcHJpbCI6IC0wLjExMjYxMTM5LCAiTWF5IjogLTAuMTQ0MTM3MjQsICJKdW5lIjogLTEuNjgyOTc1NjU5OTk5OTk5OX0sICJtb20yNiI6IHsiSmFudWFyeSI6IC0wLjAxNzUyMjA4MDAwMDAwMDAwMiwgIkZlYnJ1YXJ5IjogLTAuMDYwNTEyMTUsICJNYXJjaCI6IC0wLjA2Mjk4OTEyMDAwMDAwMDAxLCAiQXByaWwiOiAtMC4wNzM3OTE5NywgIk1heSI6IC0wLjAyNTA0NDQzLCAiSnVuZSI6IC0wLjA1MDUzOTU1fX0sICJXaWxscyBQb2ludCI6IHsiYnVkZ2V0IjogeyJKYW51YXJ5IjogLTAuMDI1ODI0LCAiRmVicnVhcnkiOiAtMC4wMjk0OTksICJNYXJjaCI6IC0wLjAzMjAzNiwgIkFwcmlsIjogLTAuMDM1MDgxLCAiTWF5IjogLTAuMDMxODcyLCAiSnVuZSI6IC0wLjAzNDIzMiwgIkp1bHkiOiAtMC4wMzM5MzcsICJBdWd1c3QiOiAtMC4wMzE4OTEsICJTZXB0ZW1iZXIiOiAtMC4wMzA2MTUsICJPY3RvYmVyIjogLTAuMDI5ODM1LCAiTm92ZW1iZXIiOiAtMC4wMjY3MzcsICJEZWNlbWJlciI6IC0wLjAyNzA3Nn0sICJtb20yNSI6IHsiSmFudWFyeSI6IC0wLjA2MjkwNzI1LCAiRmVicnVhcnkiOiAtMC4xMzc3ODQwNywgIk1hcmNoIjogLTAuMDI3MDgyMywgIkFwcmlsIjogMC4wMTMyMzA3OTAwMDAwMDAwMDEsICJNYXkiOiAwLjAwODgwMTE3LCAiSnVuZSI6IDAuMDAyODQzMzl9LCAibW9tMjYiOiB7IkphbnVhcnkiOiAtMC4wNjcxMzQ5MiwgIkZlYnJ1YXJ5IjogLTAuMDAzNTQ5MTM5OTk5OTk5OTk5NywgIk1hcmNoIjogMC4wMzk0NTkzNSwgIkFwcmlsIjogLTAuMDEwNzgxMTUsICJNYXkiOiAwLjAwMjU4MzI5LCAiSnVuZSI6IDAuMDE2OTg1Nzd9fSwgIkJhdGF2aWEiOiB7ImJ1ZGdldCI6IHsiSmFudWFyeSI6IC0wLjAyNzM0MywgIkZlYnJ1YXJ5IjogLTAuMDMxMjM1LCAiTWFyY2giOiAtMC4wMzM5MiwgIkFwcmlsIjogLTAuMDM3MTQ0LCAiTWF5IjogLTAuMDMzNzQ3LCAiSnVuZSI6IC0wLjAzNjI0NiwgIkp1bHkiOiAtMC4wMzU5MzMsICJBdWd1c3QiOiAtMC4wMzM3NjcsICJTZXB0ZW1iZXIiOiAtMC4wMzI0MTYsICJPY3RvYmVyIjogLTAuMDMxNTksICJOb3ZlbWJlciI6IC0wLjAyODMxLCAiRGVjZW1iZXIiOiAtMC4wMjg2Njl9LCAibW9tMjUiOiB7IkphbnVhcnkiOiAtMC4wMzMzODk5MSwgIkZlYnJ1YXJ5IjogLTAuMTA5NTE0MDksICJNYXJjaCI6IC0wLjA1ODkwMDcxLCAiQXByaWwiOiAtMC4wMTkzNzU0NzAwMDAwMDAwMDIsICJNYXkiOiAtMC4wMTk1OTM3MDAwMDAwMDAwMDIsICJKdW5lIjogLTAuMDU1MzM3NDN9LCAibW9tMjYiOiB7IkphbnVhcnkiOiAwLjAyMTk4MjA0LCAiRmVicnVhcnkiOiAwLjA0MjYwODQ2LCAiTWFyY2giOiAtMC4wMzQyNTU2NCwgIkFwcmlsIjogLTAuMDQzNjMzOTcsICJNYXkiOiAwLjAyMjkxMzQxLCAiSnVuZSI6IC0wLjAyNjYzMjJ9fSwgIkItV2lzZSI6IHsiYnVkZ2V0IjogeyJKYW51YXJ5IjogLTAuMDE4NTA1LCAiRmVicnVhcnkiOiAtMC4wMTc4MDUsICJNYXJjaCI6IC0wLjAyMjAzLCAiQXByaWwiOiAtMC4wMjUxMDUsICJNYXkiOiAtMC4wMjYyMDUsICJKdW5lIjogLTAuMDI5MjA1LCAiSnVseSI6IC0wLjAzMDIwNSwgIkF1Z3VzdCI6IC0wLjAyNzEwNSwgIlNlcHRlbWJlciI6IC0wLjAyOTEwNSwgIk9jdG9iZXIiOiAtMC4wODI5NTUsICJOb3ZlbWJlciI6IC0wLjAyMjEwNSwgIkRlY2VtYmVyIjogLTAuMDIyMTA1fSwgIm1vbTI1IjogeyJKYW51YXJ5IjogMC4wMTkyMjk1NzA4NDY4ODAwMTIsICJGZWJydWFyeSI6IC0wLjA0MDA4OTM4NjUzNDI4MDAyLCAiTWFyY2giOiAtMC4wMjg1MDMyNTQ4NTUxLCAiQXByaWwiOiAtMC4wNDY2MzA5NDcyMzg3NTAwMywgIk1heSI6IC0wLjAyMzY2MTQyMjYxMjE4MDAxLCAiSnVuZSI6IC0wLjAzNTUzMTc1Mjg4MTUxOTk5LCAiSnVseSI6IC0wLjAzNDY2MDI1MTI5OTAyOTk5LCAiQXVndXN0IjogLTAuMDI1ODg2NTQ5NDk5MzgsICJTZXB0ZW1iZXIiOiAtMC4wMzQwNjE4OTk1MjQ5OTAwMSwgIk9jdG9iZXIiOiAwLjAsICJOb3ZlbWJlciI6IC0wLjAwODE5MjQwMDczNjk4LCAiRGVjZW1iZXIiOiAtMC4wMjQ3NzA3MjI4OTY1MjAwMX0sICJtb20yNiI6IHsiSmFudWFyeSI6IC0wLjAzMTU3MjQ2ODA4MjU2MDAyLCAiRmVicnVhcnkiOiAtMC4wMzM5MzgwNTEzMTk0MDk5OTUsICJNYXJjaCI6IC0wLjA1NjM5MzY4Mjc2MTUzOTk4NCwgIkFwcmlsIjogLTAuMDc1NTk3ODQzODkwNTI5OTgsICJNYXkiOiAtMC4wMTg1MTI2NDg3MzQ2MDAwMDIsICJKdW5lIjogLTAuMDUxODkyMzY0NjI4MzM5OTh9fSwgIlBKIEFsbCBMb2MiOiB7ImJ1ZGdldCI6IHsiSmFudWFyeSI6IC0wLjA3NDczNDA4MzY0MzAwMjMyLCAiRmVicnVhcnkiOiAtMC4zODIxODM2Mjk1Njc2OTA5LCAiTWFyY2giOiAtMC43MTYzMTc2Mzc4NTEyNjgzLCAiQXByaWwiOiAtMC42MTEwOTg1MTI0NDU3ODQ4LCAiTWF5IjogLTAuNTgzMjc0MzIxMDE3ODc5MywgIkp1bmUiOiAtMC42Mjg3Mjk5MDQ1MzQ1OTYyLCAiSnVseSI6IC0wLjQ5MDU1MzgxNjc2NDAwNzMzLCAiQXVndXN0IjogLTAuNTU5MDYwNjI5MDIwNTkwOCwgIlNlcHRlbWJlciI6IC0wLjc2NzYyNzgwMTAxNjg4ODksICJPY3RvYmVyIjogMC4wNjgzNTIyMDk3MTIwOTMxNiwgIk5vdmVtYmVyIjogLTAuNjkxMTE5NDM5Mjg5OTE1OSwgIkRlY2VtYmVyIjogLTAuMjkzNzAxNDIxNDQwMjMzMzd9LCAibW9tMjUiOiB7IkphbnVhcnkiOiAtMC4zODA5NDIzNiwgIkZlYnJ1YXJ5IjogLTAuNTA1MTQ3MjksICJNYXJjaCI6IC0wLjMyNDAwMjM3MDAwMDAwMDEsICJBcHJpbCI6IC0wLjI0MzA1NTMsICJNYXkiOiAtMC40MzMwODg1OTAwMDAwMDAwNSwgIkp1bmUiOiAtMC41MTA0MzM0MSwgIkp1bHkiOiAtMC42NDgxNzA4NywgIkF1Z3VzdCI6IC0yLjEwMTcyNzE0LCAiU2VwdGVtYmVyIjogLTAuNzc4NzM4NDM5OTk5OTk5OSwgIk9jdG9iZXIiOiAtMC42NDA3MDkyMywgIk5vdmVtYmVyIjogMC4xMzc4NDQzMjAwMDAwMDAwMiwgIkRlY2VtYmVyIjogLTAuNjUxMzc5Nzl9LCAibW9tMjYiOiB7IkphbnVhcnkiOiAtMC43Mjc1MTkxNywgIkZlYnJ1YXJ5IjogLTAuNzU5Mjg4NDUsICJNYXJjaCI6IC0wLjI0MDUyMjkxLCAiQXByaWwiOiAtMC4zODIxNjk4LCAiTWF5IjogLTAuMTI0MzA3ODksICJKdW5lIjogLTAuMjYwMzIxNjR9fSwgIlN1bW5lciAoJCdzL00pIjogeyJidWRnZXQiOiB7IkphbnVhcnkiOiAtMC4wMzM2MywgIkZlYnJ1YXJ5IjogLTAuMTcxOTgzLCAiTWFyY2giOiAtMC4zMjIzNDMsICJBcHJpbCI6IC0wLjI3NDk5NCwgIk1heSI6IC0wLjI2MjQ3MywgIkp1bmUiOiAtMC4yODI5MjgsICJKdWx5IjogLTAuMjIwNzQ5LCAiQXVndXN0IjogLTAuMjUxNTc3LCAiU2VwdGVtYmVyIjogLTAuMzQ1NDMzLCAiT2N0b2JlciI6IDAuMDMwNzU4LCAiTm92ZW1iZXIiOiAtMC4zMTEwMDQsICJEZWNlbWJlciI6IC0wLjEzMjE2Nn0sICJtb20yNSI6IHsiSmFudWFyeSI6IC0wLjIzNDI2MTYwMDAwMDAwMDAxLCAiRmVicnVhcnkiOiAtMC4yMzk3NTcyNSwgIk1hcmNoIjogLTAuMjA4MzcwOTQsICJBcHJpbCI6IC0wLjE2MjY4NDkxMDAwMDAwMDAyLCAiTWF5IjogLTAuMjQ5MDgzNTIsICJKdW5lIjogLTAuMjU5NTI4MTh9LCAibW9tMjYiOiB7IkphbnVhcnkiOiAtMC4zMzU5MzM4NiwgIkZlYnJ1YXJ5IjogLTAuMjYyOTk3NywgIk1hcmNoIjogLTAuMDk4MTAwMjYsICJBcHJpbCI6IC0wLjE5MTcxMzk0LCAiTWF5IjogLTAuMDE4MTQyNTgwMDAwMDAwMDAyLCAiSnVuZSI6IC0wLjEyODEzMjF9fSwgIk10IE9yYWIgKCQncy9NKSI6IHsiYnVkZ2V0IjogeyJKYW51YXJ5IjogLTAuMDIyNDIsICJGZWJydWFyeSI6IC0wLjExNDY1NSwgIk1hcmNoIjogLTAuMjE0ODk1LCAiQXByaWwiOiAtMC4xODMzMywgIk1heSI6IC0wLjE3NDk4MiwgIkp1bmUiOiAtMC4xODg2MTksICJKdWx5IjogLTAuMTQ3MTY2LCAiQXVndXN0IjogLTAuMTY3NzE4LCAiU2VwdGVtYmVyIjogLTAuMjMwMjg4LCAiT2N0b2JlciI6IDAuMDIwNTA2LCAiTm92ZW1iZXIiOiAtMC4yMDczMzYsICJEZWNlbWJlciI6IC0wLjA4ODExfSwgIm1vbTI1IjogeyJKYW51YXJ5IjogLTAuMDgwODQxMzIwMDAwMDAwMDEsICJGZWJydWFyeSI6IC0wLjA5MDY1NDE2MDAwMDAwMDE1LCAiTWFyY2giOiAtMC4wMzk0Njk0Njk5OTk5OTk3ODQsICJBcHJpbCI6IC0wLjA0Nzg1MTg4LCAiTWF5IjogLTAuMDIzNDgyMDI5OTk5OTk5OTk3LCAiSnVuZSI6IC0wLjA3NzE0ODgzfSwgIm1vbTI2IjogeyJKYW51YXJ5IjogLTAuMjkxNDQyNDgsICJGZWJydWFyeSI6IC0wLjEwNzYzNDc1LCAiTWFyY2giOiAtMC4wODQyOTU5NiwgIkFwcmlsIjogLTAuMDc1MTU3NzU5OTk5OTk5OTksICJNYXkiOiAtMC4wNTI2NTUxMzk5OTk5OTk5OTYsICJKdW5lIjogLTAuMDg3OTEwMzcwMDAwMDAwMDJ9fSwgIk1leGljbyAoJCdzTSkiOiB7ImJ1ZGdldCI6IHsiSmFudWFyeSI6IC0wLjAxODY4NCwgIkZlYnJ1YXJ5IjogLTAuMDk1NTQ2LCAiTWFyY2giOiAtMC4xNzkwNzksICJBcHJpbCI6IC0wLjE1Mjc3NSwgIk1heSI6IC0wLjE0NTgxOSwgIkp1bmUiOiAtMC4xNTcxODIsICJKdWx5IjogLTAuMTIyNjM4LCAiQXVndXN0IjogLTAuMTM5NzY1LCAiU2VwdGVtYmVyIjogLTAuMTkxOTA3LCAiT2N0b2JlciI6IDAuMDE3MDg4LCAiTm92ZW1iZXIiOiAtMC4xNzI3OCwgIkRlY2VtYmVyIjogLTAuMDczNDI1fSwgIm1vbTI1IjogeyJKYW51YXJ5IjogLTAuMDcyNzc0OTE5OTk5OTk5OTksICJGZWJydWFyeSI6IC0wLjIyMjA4MzcxLCAiTWFyY2giOiAtMC4wOTMzMjI0NCwgIkFwcmlsIjogLTAuMDc3MjY0MDIsICJNYXkiOiAtMC4yMTkyOTE3Mzk5OTk5OTk5OSwgIkp1bmUiOiAtMC4xNTQ2MTkxMn0sICJtb20yNiI6IHsiSmFudWFyeSI6IC0wLjEzMzkwNDQsICJGZWJydWFyeSI6IC0wLjQxODk5NTI3MDAwMDAwMDAzLCAiTWFyY2giOiAtMC4xMzI0OTk3Mzk5OTk5OTk5OCwgIkFwcmlsIjogLTAuMTc1MDQ2MjQsICJNYXkiOiAtMC4xNjM4NTUxMSwgIkp1bmUiOiAtMC4xMTUyMTk0fX19LCAiYnRDYXRzIjogeyJNdCBQbGVhc2FudCAtIFJldGFpbCI6IFt7ImNhdCI6ICJFbmdpbmVlcmluZyBEaXNjIiwgInZhbCI6IDAuMH0sIHsiY2F0IjogIlRyaXBsZSBNYXRjaCBFcnJvcnMiLCAidmFsIjogLTUyOS43NX0sIHsiY2F0IjogIlRyYWlsZXIgQ29tcGxldGlvbiIsICJ2YWwiOiAwLjB9LCB7ImNhdCI6ICJDeWNsZSBDb3VudCAtIFJldGFpbCIsICJ2YWwiOiAyNjM1NS4wOX0sIHsiY2F0IjogIkludGVycGxhbnQgVHJhbnNmZXIiLCAidmFsIjogNzM3MjMuMDN9LCB7ImNhdCI6ICJQaHkgSW52IFJlY29uY2lsZSAtIE1hbnVmYWN0dXJpbmciLCAidmFsIjogMC4wfSwgeyJjYXQiOiAiT2Jzb2xldGUgLSBEYW1hZ2VkIiwgInZhbCI6IDAuMH0sIHsiY2F0IjogIlJldmVyc2UgUHJvZCIsICJ2YWwiOiAwLjB9LCB7ImNhdCI6ICJXYXJyYW50eSIsICJ2YWwiOiAtMjY2Ni4zM30sIHsiY2F0IjogIlBsYW50IEVmZmljaWVuY3kgSW50aWF0aXZlcyIsICJ2YWwiOiAtMjYwLjkyfSwgeyJjYXQiOiAiUGh5IEludiBSZWNvbmNpbGUgLSBSZXRhaWwiLCAidmFsIjogLTY5MTguODV9LCB7ImNhdCI6ICJSICYgRCIsICJ2YWwiOiAtMjk1LjU5fSwgeyJjYXQiOiAiU2NyYXAgLSBDdXQgU2hlZXRzIiwgInZhbCI6IDAuMH0sIHsiY2F0IjogIlNjcmFwIC0gUHJvY2VzcyBFcnJvciIsICJ2YWwiOiAwLjB9LCB7ImNhdCI6ICJTaGlwcGluZyBGdW5uZWwiLCAidmFsIjogMC4wfSwgeyJjYXQiOiAiQ3ljbGUgQ291bnQiLCAidmFsIjogLTM1MDc4LjQyfSwgeyJjYXQiOiAiU2NyYXAgLSBEYW1hZ2VkIiwgInZhbCI6IC03OTE2LjIxfSwgeyJjYXQiOiAiR3JhbmQgVG90YWwiLCAidmFsIjogNDY0MTIuMDQ5OTk5OTk5OTk2fV0sICJCYXRhdmlhIjogW3siY2F0IjogIkVuZ2luZWVyaW5nIERpc2MiLCAidmFsIjogMjQ4Ni44MX0sIHsiY2F0IjogIlRyaXBsZSBNYXRjaCBFcnJvcnMiLCAidmFsIjogNDk5MS4wM30sIHsiY2F0IjogIlRyYWlsZXIgQ29tcGxldGlvbiIsICJ2YWwiOiAwLjB9LCB7ImNhdCI6ICJDeWNsZSBDb3VudCAtIFJldGFpbCIsICJ2YWwiOiAwLjB9LCB7ImNhdCI6ICJJbnRlcnBsYW50IFRyYW5zZmVyIiwgInZhbCI6IDUzMDMzLjM2fSwgeyJjYXQiOiAiUGh5IEludiBSZWNvbmNpbGUgLSBNYW51ZmFjdHVyaW5nIiwgInZhbCI6IC03MTA5Ljg4fSwgeyJjYXQiOiAiT2Jzb2xldGUgLSBEYW1hZ2VkIiwgInZhbCI6IDAuMH0sIHsiY2F0IjogIlJldmVyc2UgUHJvZCIsICJ2YWwiOiAxNTQwLjEyfSwgeyJjYXQiOiAiV2FycmFudHkiLCAidmFsIjogLTQzNS4zN30sIHsiY2F0IjogIlBsYW50IEVmZmljaWVuY3kgSW50aWF0aXZlcyIsICJ2YWwiOiAwLjB9LCB7ImNhdCI6ICJQaHkgSW52IFJlY29uY2lsZSAtIFJldGFpbCIsICJ2YWwiOiAwLjB9LCB7ImNhdCI6ICJSICYgRCIsICJ2YWwiOiAwLjB9LCB7ImNhdCI6ICJTY3JhcCAtIEN1dCBTaGVldHMiLCAidmFsIjogLTI4NTIwLjQ5fSwgeyJjYXQiOiAiU2NyYXAgLSBQcm9jZXNzIEVycm9yIiwgInZhbCI6IC01Mjg3Ljg2fSwgeyJjYXQiOiAiU2hpcHBpbmcgRnVubmVsIiwgInZhbCI6IC0xOTE1Ni45OX0sIHsiY2F0IjogIkN5Y2xlIENvdW50IiwgInZhbCI6IDExOTAxLjd9LCB7ImNhdCI6ICJTY3JhcCAtIERhbWFnZWQiLCAidmFsIjogLTMwNDYwLjMzfSwgeyJjYXQiOiAiR3JhbmQgVG90YWwiLCAidmFsIjogLTE3MDE3LjkwMDAwMDAwMDAwNX1dLCAiV2lsbHMgUG9pbnQiOiBbeyJjYXQiOiAiRW5naW5lZXJpbmcgRGlzYyIsICJ2YWwiOiA4NjQyOC4yNn0sIHsiY2F0IjogIlRyaXBsZSBNYXRjaCBFcnJvcnMiLCAidmFsIjogNDc1NjYuNTJ9LCB7ImNhdCI6ICJUcmFpbGVyIENvbXBsZXRpb24iLCAidmFsIjogMzI4NDguNzR9LCB7ImNhdCI6ICJDeWNsZSBDb3VudCAtIFJldGFpbCIsICJ2YWwiOiAwLjB9LCB7ImNhdCI6ICJJbnRlcnBsYW50IFRyYW5zZmVyIiwgInZhbCI6IC0yMDYwNy41Mn0sIHsiY2F0IjogIlBoeSBJbnYgUmVjb25jaWxlIC0gTWFudWZhY3R1cmluZyIsICJ2YWwiOiA4ODAzLjE1fSwgeyJjYXQiOiAiT2Jzb2xldGUgLSBEYW1hZ2VkIiwgInZhbCI6IDAuMH0sIHsiY2F0IjogIlJldmVyc2UgUHJvZCIsICJ2YWwiOiAwLjB9LCB7ImNhdCI6ICJXYXJyYW50eSIsICJ2YWwiOiAwLjB9LCB7ImNhdCI6ICJQbGFudCBFZmZpY2llbmN5IEludGlhdGl2ZXMiLCAidmFsIjogMC4wfSwgeyJjYXQiOiAiUGh5IEludiBSZWNvbmNpbGUgLSBSZXRhaWwiLCAidmFsIjogMC4wfSwgeyJjYXQiOiAiUiAmIEQiLCAidmFsIjogLTcxOTUuODF9LCB7ImNhdCI6ICJTY3JhcCAtIEN1dCBTaGVldHMiLCAidmFsIjogLTQyNC43MX0sIHsiY2F0IjogIlNjcmFwIC0gUHJvY2VzcyBFcnJvciIsICJ2YWwiOiAtNzIzOC4zNX0sIHsiY2F0IjogIlNoaXBwaW5nIEZ1bm5lbCIsICJ2YWwiOiAtNTY1MTguNjF9LCB7ImNhdCI6ICJDeWNsZSBDb3VudCIsICJ2YWwiOiAtNjkzMjcuODN9LCB7ImNhdCI6ICJTY3JhcCAtIERhbWFnZWQiLCAidmFsIjogLTM2NzcwLjY0fSwgeyJjYXQiOiAiR3JhbmQgVG90YWwiLCAidmFsIjogLTIyNDM2LjgwMDAwMDAwMDAwM31dLCAiTXQgUGxlYXNhbnQiOiBbeyJjYXQiOiAiRW5naW5lZXJpbmcgRGlzYyIsICJ2YWwiOiAxMTI0NTAuMzJ9LCB7ImNhdCI6ICJUcmlwbGUgTWF0Y2ggRXJyb3JzIiwgInZhbCI6IDEzMDcwLjN9LCB7ImNhdCI6ICJUcmFpbGVyIENvbXBsZXRpb24iLCAidmFsIjogNDYwNjcuODN9LCB7ImNhdCI6ICJDeWNsZSBDb3VudCAtIFJldGFpbCIsICJ2YWwiOiA1MjQuNTN9LCB7ImNhdCI6ICJJbnRlcnBsYW50IFRyYW5zZmVyIiwgInZhbCI6IC05MDk3My41Nn0sIHsiY2F0IjogIlBoeSBJbnYgUmVjb25jaWxlIC0gTWFudWZhY3R1cmluZyIsICJ2YWwiOiAwLjB9LCB7ImNhdCI6ICJPYnNvbGV0ZSAtIERhbWFnZWQiLCAidmFsIjogLTE1Ni43OX0sIHsiY2F0IjogIlJldmVyc2UgUHJvZCIsICJ2YWwiOiAtMTg3Mi4wNn0sIHsiY2F0IjogIldhcnJhbnR5IiwgInZhbCI6IC03NjkuNzR9LCB7ImNhdCI6ICJQbGFudCBFZmZpY2llbmN5IEludGlhdGl2ZXMiLCAidmFsIjogLTQyMTEuNTF9LCB7ImNhdCI6ICJQaHkgSW52IFJlY29uY2lsZSAtIFJldGFpbCIsICJ2YWwiOiAwLjB9LCB7ImNhdCI6ICJSICYgRCIsICJ2YWwiOiAtODUxNy42M30sIHsiY2F0IjogIlNjcmFwIC0gQ3V0IFNoZWV0cyIsICJ2YWwiOiAtNzE4OS45NX0sIHsiY2F0IjogIlNjcmFwIC0gUHJvY2VzcyBFcnJvciIsICJ2YWwiOiAtMjMxLjI3fSwgeyJjYXQiOiAiU2hpcHBpbmcgRnVubmVsIiwgInZhbCI6IC0yMDIzNjEuMH0sIHsiY2F0IjogIkN5Y2xlIENvdW50IiwgInZhbCI6IC04OTkyOC41OX0sIHsiY2F0IjogIlNjcmFwIC0gRGFtYWdlZCIsICJ2YWwiOiAtNTYzMDAuMTh9LCB7ImNhdCI6ICJHcmFuZCBUb3RhbCIsICJ2YWwiOiAtMjkwMzk5LjN9XSwgIk1hZGlsbCI6IFt7ImNhdCI6ICJFbmdpbmVlcmluZyBEaXNjIiwgInZhbCI6IDExMTQ3Ni4zNX0sIHsiY2F0IjogIlRyaXBsZSBNYXRjaCBFcnJvcnMiLCAidmFsIjogMjgzMDIuNzJ9LCB7ImNhdCI6ICJUcmFpbGVyIENvbXBsZXRpb24iLCAidmFsIjogMTE4My4zOH0sIHsiY2F0IjogIkN5Y2xlIENvdW50IC0gUmV0YWlsIiwgInZhbCI6IDAuMH0sIHsiY2F0IjogIkludGVycGxhbnQgVHJhbnNmZXIiLCAidmFsIjogLTEyNTEuMzV9LCB7ImNhdCI6ICJQaHkgSW52IFJlY29uY2lsZSAtIE1hbnVmYWN0dXJpbmciLCAidmFsIjogMC4wfSwgeyJjYXQiOiAiT2Jzb2xldGUgLSBEYW1hZ2VkIiwgInZhbCI6IDAuMH0sIHsiY2F0IjogIlJldmVyc2UgUHJvZCIsICJ2YWwiOiAtMTA3My44N30sIHsiY2F0IjogIldhcnJhbnR5IiwgInZhbCI6IDAuMH0sIHsiY2F0IjogIlBsYW50IEVmZmljaWVuY3kgSW50aWF0aXZlcyIsICJ2YWwiOiAtNzE3LjQyfSwgeyJjYXQiOiAiUGh5IEludiBSZWNvbmNpbGUgLSBSZXRhaWwiLCAidmFsIjogMC4wfSwgeyJjYXQiOiAiUiAmIEQiLCAidmFsIjogLTQ0OC40OX0sIHsiY2F0IjogIlNjcmFwIC0gQ3V0IFNoZWV0cyIsICJ2YWwiOiAtMTExLjk5fSwgeyJjYXQiOiAiU2NyYXAgLSBQcm9jZXNzIEVycm9yIiwgInZhbCI6IC0yNDk2Ni43OH0sIHsiY2F0IjogIlNoaXBwaW5nIEZ1bm5lbCIsICJ2YWwiOiAtMzY5MzkuMjJ9LCB7ImNhdCI6ICJDeWNsZSBDb3VudCIsICJ2YWwiOiAtMTQ3NDY0LjQ0fSwgeyJjYXQiOiAiU2NyYXAgLSBEYW1hZ2VkIiwgInZhbCI6IC0yNTcwNDUuNzN9LCB7ImNhdCI6ICJHcmFuZCBUb3RhbCIsICJ2YWwiOiAtMzI5MDU2LjgzOTk5OTk5OTk3fV0sICJHcmFuZCBUb3RhbCI6IFt7ImNhdCI6ICJFbmdpbmVlcmluZyBEaXNjIiwgInZhbCI6IDMxMjg0MS43NH0sIHsiY2F0IjogIlRyaXBsZSBNYXRjaCBFcnJvcnMiLCAidmFsIjogOTM0MDAuODE5OTk5OTk5OTl9LCB7ImNhdCI6ICJUcmFpbGVyIENvbXBsZXRpb24iLCAidmFsIjogODAwOTkuOTUwMDAwMDAwMDF9LCB7ImNhdCI6ICJDeWNsZSBDb3VudCAtIFJldGFpbCIsICJ2YWwiOiAyNjg3OS42Mn0sIHsiY2F0IjogIkludGVycGxhbnQgVHJhbnNmZXIiLCAidmFsIjogMTM5MjMuOTU5OTk5OTk5OTk3fSwgeyJjYXQiOiAiUGh5IEludiBSZWNvbmNpbGUgLSBNYW51ZmFjdHVyaW5nIiwgInZhbCI6IDE2OTMuMjY5OTk5OTk5OTk5NX0sIHsiY2F0IjogIk9ic29sZXRlIC0gRGFtYWdlZCIsICJ2YWwiOiAtMTU2Ljc5fSwgeyJjYXQiOiAiUmV2ZXJzZSBQcm9kIiwgInZhbCI6IC0xNDA1LjgxfSwgeyJjYXQiOiAiV2FycmFudHkiLCAidmFsIjogLTM4NzEuNDM5OTk5OTk5OTk5Nn0sIHsiY2F0IjogIlBsYW50IEVmZmljaWVuY3kgSW50aWF0aXZlcyIsICJ2YWwiOiAtNTE4OS44NX0sIHsiY2F0IjogIlBoeSBJbnYgUmVjb25jaWxlIC0gUmV0YWlsIiwgInZhbCI6IC02OTE4Ljg1fSwgeyJjYXQiOiAiUiAmIEQiLCAidmFsIjogLTE2NDU3LjUyfSwgeyJjYXQiOiAiU2NyYXAgLSBDdXQgU2hlZXRzIiwgInZhbCI6IC0zNjI0Ny4xNH0sIHsiY2F0IjogIlNjcmFwIC0gUHJvY2VzcyBFcnJvciIsICJ2YWwiOiAtMzc3MjQuMjU5OTk5OTk5OTk1fSwgeyJjYXQiOiAiU2hpcHBpbmcgRnVubmVsIiwgInZhbCI6IC0zMTQ5NzUuODE5OTk5OTk5OTV9LCB7ImNhdCI6ICJDeWNsZSBDb3VudCIsICJ2YWwiOiAtMzI5ODk3LjU4fSwgeyJjYXQiOiAiU2NyYXAgLSBEYW1hZ2VkIiwgInZhbCI6IC0zODg0OTMuMDg5OTk5OTk5OTd9LCB7ImNhdCI6ICJHcmFuZCBUb3RhbCIsICJ2YWwiOiAtNjEyNDk4Ljc5fV19LCAicGpDYXRzIjogeyJTdW1uZXIgLSBSZXRhaWwiOiBbeyJjYXQiOiAiUmV0YWlsIC0gTWFudWYgVHJhbnMuIiwgInZhbCI6IDM1NTI3MC42Nn0sIHsiY2F0IjogIk5vbl9DeWNsZSAtIERvIE5PVCBVc2UiLCAidmFsIjogMC4wfSwgeyJjYXQiOiAiTW9udGggQ2xvc2UgVHJ1ZSB1cCIsICJ2YWwiOiAxMzUuNzl9LCB7ImNhdCI6ICJJbnRlcnBsYW50IFRyYW5zZmVyIiwgInZhbCI6IDEyMTM1LjN9LCB7ImNhdCI6ICJSZXZlcnNlIFByb2QiLCAidmFsIjogOTk0OS4zNX0sIHsiY2F0IjogIkVuZ2luZWVyaW5nIERpc2MiLCAidmFsIjogMC4wfSwgeyJjYXQiOiAiU2NyYXAgLSBDdXQgU2hlZXRzIiwgInZhbCI6IDAuMH0sIHsiY2F0IjogIlIgJiBEIiwgInZhbCI6IDAuMH0sIHsiY2F0IjogIlNjcmFwIC0gRGFtYWdlZCIsICJ2YWwiOiAwLjB9LCB7ImNhdCI6ICJDeWNsZSBDb3VudCIsICJ2YWwiOiAyMDE2LjF9LCB7ImNhdCI6ICJUcmlwbGUgTWF0Y2ggRXJyb3JzIiwgInZhbCI6IDAuMH0sIHsiY2F0IjogIlNjcmFwIC0gRHJvcCIsICJ2YWwiOiAwLjB9LCB7ImNhdCI6ICJHcmFuZCBUb3RhbCIsICJ2YWwiOiAzNzk1MDcuMTk5OTk5OTk5OX1dLCAiTXQgT3JhYiI6IFt7ImNhdCI6ICJSZXRhaWwgLSBNYW51ZiBUcmFucy4iLCAidmFsIjogMC4wfSwgeyJjYXQiOiAiTm9uX0N5Y2xlIC0gRG8gTk9UIFVzZSIsICJ2YWwiOiA5NjQyNC4wN30sIHsiY2F0IjogIk1vbnRoIENsb3NlIFRydWUgdXAiLCAidmFsIjogMTQ1NzcuMDJ9LCB7ImNhdCI6ICJJbnRlcnBsYW50IFRyYW5zZmVyIiwgInZhbCI6IDAuMH0sIHsiY2F0IjogIlJldmVyc2UgUHJvZCIsICJ2YWwiOiAtMzMwMy4xOX0sIHsiY2F0IjogIkVuZ2luZWVyaW5nIERpc2MiLCAidmFsIjogLTIzNzMuOTV9LCB7ImNhdCI6ICJTY3JhcCAtIEN1dCBTaGVldHMiLCAidmFsIjogMC4wfSwgeyJjYXQiOiAiUiAmIEQiLCAidmFsIjogMTYuOH0sIHsiY2F0IjogIlNjcmFwIC0gRGFtYWdlZCIsICJ2YWwiOiAtNTM4MDIuOTd9LCB7ImNhdCI6ICJDeWNsZSBDb3VudCIsICJ2YWwiOiAtNDM5ODkuNzV9LCB7ImNhdCI6ICJUcmlwbGUgTWF0Y2ggRXJyb3JzIiwgInZhbCI6IC00MDgyMTYuMDd9LCB7ImNhdCI6ICJTY3JhcCAtIERyb3AiLCAidmFsIjogLTYzMjI0NC4wNH0sIHsiY2F0IjogIkdyYW5kIFRvdGFsIiwgInZhbCI6IC0xMDMyOTEyLjA4MDAwMDAwMDF9XSwgIlN1bW5lciI6IFt7ImNhdCI6ICJSZXRhaWwgLSBNYW51ZiBUcmFucy4iLCAidmFsIjogLTE0ODg4OC45N30sIHsiY2F0IjogIk5vbl9DeWNsZSAtIERvIE5PVCBVc2UiLCAidmFsIjogMC4wfSwgeyJjYXQiOiAiTW9udGggQ2xvc2UgVHJ1ZSB1cCIsICJ2YWwiOiAzMDE1OS4zOH0sIHsiY2F0IjogIkludGVycGxhbnQgVHJhbnNmZXIiLCAidmFsIjogMjQxMTMuOTF9LCB7ImNhdCI6ICJSZXZlcnNlIFByb2QiLCAidmFsIjogMTkwNzIuMjF9LCB7ImNhdCI6ICJFbmdpbmVlcmluZyBEaXNjIiwgInZhbCI6IC0xNTA1LjY1fSwgeyJjYXQiOiAiU2NyYXAgLSBDdXQgU2hlZXRzIiwgInZhbCI6IC0xODY2Ny4wN30sIHsiY2F0IjogIlIgJiBEIiwgInZhbCI6IC01OTE4OC43MX0sIHsiY2F0IjogIlNjcmFwIC0gRGFtYWdlZCIsICJ2YWwiOiAtNzQ2NC45OX0sIHsiY2F0IjogIkN5Y2xlIENvdW50IiwgInZhbCI6IC0xOTgyNTYuODl9LCB7ImNhdCI6ICJUcmlwbGUgTWF0Y2ggRXJyb3JzIiwgInZhbCI6IC0xMjcxMi40OX0sIHsiY2F0IjogIlNjcmFwIC0gRHJvcCIsICJ2YWwiOiAtNjYxNjgxLjE3fSwgeyJjYXQiOiAiR3JhbmQgVG90YWwiLCAidmFsIjogLTEwMzUwMjAuNDQwMDAwMDAwMX1dLCAiTWV4Y2lvIjogW3siY2F0IjogIlJldGFpbCAtIE1hbnVmIFRyYW5zLiIsICJ2YWwiOiAwLjB9LCB7ImNhdCI6ICJOb25fQ3ljbGUgLSBEbyBOT1QgVXNlIiwgInZhbCI6IDQyMS40Mn0sIHsiY2F0IjogIk1vbnRoIENsb3NlIFRydWUgdXAiLCAidmFsIjogMzM1MS40Mn0sIHsiY2F0IjogIkludGVycGxhbnQgVHJhbnNmZXIiLCAidmFsIjogMC4wfSwgeyJjYXQiOiAiUmV2ZXJzZSBQcm9kIiwgInZhbCI6IDM3MTYuNzJ9LCB7ImNhdCI6ICJFbmdpbmVlcmluZyBEaXNjIiwgInZhbCI6IC0yNzc0Ljk4fSwgeyJjYXQiOiAiU2NyYXAgLSBDdXQgU2hlZXRzIiwgInZhbCI6IC0yNjE5NS42OH0sIHsiY2F0IjogIlIgJiBEIiwgInZhbCI6IDAuMH0sIHsiY2F0IjogIlNjcmFwIC0gRGFtYWdlZCIsICJ2YWwiOiAtMTMyMjguMDF9LCB7ImNhdCI6ICJDeWNsZSBDb3VudCIsICJ2YWwiOiAtMTQyMjI1LjM4fSwgeyJjYXQiOiAiVHJpcGxlIE1hdGNoIEVycm9ycyIsICJ2YWwiOiA3MjUzLjc1fSwgeyJjYXQiOiAiU2NyYXAgLSBEcm9wIiwgInZhbCI6IC05Njk4MzkuNDJ9LCB7ImNhdCI6ICJHcmFuZCBUb3RhbCIsICJ2YWwiOiAtMTEzOTUyMC4xNjAwMDAwMDAxfV19LCAiYndDYXRzIjoge319"));
+  } catch(e) { console.error("Embed error:", e); }
+})();
+</script>
+</body>
+</html>
