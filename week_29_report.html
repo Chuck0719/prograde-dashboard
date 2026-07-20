@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<!--
+  HOW TO EDIT COMMENTARY IN THIS REPORT
+  1. Open this file in Notepad (Windows) or TextEdit (Mac).
+  2. Press Ctrl+F / Cmd+F and search for a section name such as
+     "BT WEEK-ON-WEEK" to jump straight to those cards.
+  3. Edit the text inside the card, then save and refresh your browser.
+  Do NOT paste HTML comment end-markers inside this instruction block.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pro Grade — Week 29 Adjustment Report</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f3; color: #1a1a18; min-height: 100vh; padding: 2rem; }
+  .page { max-width: 1100px; margin: 0 auto; }
+  .page-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 2rem; }
+  .page-header-sub { font-size: 13px; color: #73726c; margin-bottom: 4px; }
+  .page-header-title { font-size: 26px; font-weight: 500; color: #1a1a18; }
+  .page-header-meta { font-size: 12px; color: #a0a09a; }
+  .entity-block { margin-bottom: 3rem; }
+  .entity-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #a0a09a; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 0.5px solid #d8d7d0; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.75rem; }
+  .kpi { background: #fff; border: 0.5px solid #e0dfd8; border-radius: 8px; padding: 1rem; }
+  .kpi-label { font-size: 12px; color: #73726c; margin-bottom: 6px; }
+  .kpi-value { font-size: 22px; font-weight: 500; }
+  .kpi-value.neg { color: #a32d2d; }
+  .kpi-value.pos { color: #3b6d11; }
+  .kpi-value.flat { color: #73726c; }
+  .section { background: #fff; border: 0.5px solid #e0dfd8; border-radius: 10px; padding: 1.25rem; }
+  .full-section { background: #fff; border: 0.5px solid #e0dfd8; border-radius: 10px; padding: 1.25rem; margin-bottom: 1.75rem; }
+  .section-title { font-size: 13px; font-weight: 500; color: #73726c; margin-bottom: 10px; }
+  .section-subtitle { font-size: 11px; color: #a0a09a; margin-bottom: 12px; margin-top: -6px; }
+  .iqr-section { background: #fff; border: 0.5px solid #e0dfd8; border-radius: 10px; padding: 1.25rem; margin-bottom: 1.75rem; }
+  .iqr-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; align-items: start; }
+  .iqr-kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .iqr-kpi { background: #f5f5f3; border-radius: 6px; padding: 0.75rem; }
+  .iqr-kpi-label { font-size: 11px; color: #73726c; margin-bottom: 4px; }
+  .iqr-kpi-value { font-size: 16px; font-weight: 500; color: #1a1a18; }
+  .iqr-kpi-change { font-size: 11px; margin-top: 2px; }
+  .iqr-kpi-change.neg { color: #a32d2d; }
+  .iqr-kpi-change.pos { color: #3b6d11; }
+  .iqr-kpi-change.warn { color: #b07500; }
+  .iqr-total { margin-top: 8px; background: #f5f5f3; border-radius: 6px; padding: 0.75rem; }
+  .charts-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 16px; margin-bottom: 1.75rem; }
+  .legend { display: flex; gap: 14px; margin-bottom: 12px; font-size: 12px; color: #73726c; }
+  .legend span { display: flex; align-items: center; gap: 4px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .chart-wrap { position: relative; width: 100%; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { text-align: left; padding: 6px 8px 8px 0; font-weight: 500; color: #73726c; font-size: 11px; border-bottom: 0.5px solid #c8c7c0; }
+  thead th:nth-child(3), thead th:nth-child(4) { text-align: right; }
+  thead th:nth-child(4) { padding-left: 10px; }
+  tbody tr { border-bottom: 0.5px solid #e8e7e0; }
+  tbody td { padding: 9px 8px 9px 0; vertical-align: middle; }
+  tbody td:nth-child(3) { text-align: right; font-weight: 500; font-size: 12px; white-space: nowrap; padding-right: 0; }
+  tbody td:nth-child(4) { text-align: right; font-size: 11px; color: #a0a09a; white-space: nowrap; padding-left: 10px; }
+  .loc-name { font-size: 12px; color: #1a1a18; }
+  .mini-bar-track { margin-top: 4px; height: 3px; width: 100%; background: #e8e7e0; border-radius: 2px; }
+  .mini-bar-fill { height: 3px; border-radius: 2px; }
+  .col-label { font-size: 13px; font-weight: 500; color: #73726c; }
+  .commentary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .card { background: #fff; border: 0.5px solid #e0dfd8; padding: 1rem; }
+  .card.neg { border-left: 3px solid #a32d2d; }
+  .card.pos { border-left: 3px solid #3b6d11; }
+  .card.warn { border-left: 3px solid #b07500; }
+  .card-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .card-title { font-size: 13px; font-weight: 500; color: #1a1a18; }
+  .card-value { font-size: 12px; font-weight: 500; white-space: nowrap; margin-left: 12px; }
+  .card-value.neg { color: #a32d2d; }
+  .card-value.pos { color: #3b6d11; }
+  .card-value.warn { color: #b07500; }
+  .card-body { font-size: 12px; color: #5f5e5a; line-height: 1.65; }
+  .card-full { grid-column: span 2; }
+  .wow-section { background: #fff; border: 0.5px solid #e0dfd8; border-radius: 10px; padding: 1.25rem; margin-top: 1.75rem; }
+  .wow-kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .wow-kpi { background: #f5f5f3; border-radius: 6px; padding: 0.75rem; }
+  .wow-kpi-label { font-size: 11px; color: #73726c; margin-bottom: 6px; font-weight: 500; }
+  .wow-kpi-vals { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+  .wow-week { font-size: 10px; color: #a0a09a; }
+  .wow-val { font-size: 12px; font-weight: 500; }
+  .wow-val.neg { color: #a32d2d; }
+  .wow-val.pos { color: #3b6d11; }
+  .wow-val.warn { color: #b07500; }
+  .wow-val.flat { color: #73726c; }
+  .wow-arrow { font-size: 11px; color: #c8c7c0; }
+  .wow-delta { font-size: 11px; font-weight: 500; margin-left: 2px; }
+  .wow-delta.neg { color: #a32d2d; }
+  .wow-delta.pos { color: #3b6d11; }
+  .wow-delta.warn { color: #b07500; }
+  @media (max-width: 800px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .iqr-grid { grid-template-columns: 1fr; }
+    .charts-grid { grid-template-columns: 1fr; }
+    .commentary-grid { grid-template-columns: 1fr; }
+    .card-full { grid-column: span 1; }
+    .wow-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+
+  <div class="page-header">
+    <div>
+      <p class="page-header-sub">Week 29, 2026 · Inventory adjustment report</p>
+      <p class="page-header-title">Pro Grade — inventory adjustments</p>
+    </div>
+    <span class="page-header-meta">BT &amp; PJ entities</span>
+  </div>
+
+  <div class="entity-block">
+    <p class="entity-label">Big Tex (BT) &nbsp;·&nbsp; 318 line items &nbsp;·&nbsp; 273 SKUs &nbsp;·&nbsp; Mt Pleasant Retail shown ex-interplant</p>
+
+
+    <div class="kpi-grid">
+      <div class="kpi"><p class="kpi-label">Net cost adjustment</p><p class="kpi-value neg">-$36,391</p></div>
+      <div class="kpi"><p class="kpi-label">Total positive movements</p><p class="kpi-value pos">+$153,441</p></div>
+      <div class="kpi"><p class="kpi-label">Total negative movements</p><p class="kpi-value neg">-$189,832</p></div>
+      <div class="kpi"><p class="kpi-label">Net unit variance</p><p class="kpi-value neg">-36,043</p></div>
+    </div>
+
+
+    <div class="iqr-section">
+      <p class="section-title">Inventory quality report (IQR) — Week 9 to Week 30</p>
+      <p class="section-subtitle">Values in $M &nbsp;·&nbsp; Comparing Week 30 start vs Week 29 start</p>
+      <div class="iqr-grid">
+        <div class="chart-wrap" style="height:240px;">
+          <canvas id="btIqrChart"></canvas>
+        </div>
+        <div>
+          <p style="font-size:11px; font-weight:500; color:#73726c; margin-bottom:8px;">Week 30 start vs Week 29 start</p>
+          <div class="iqr-kpi-grid">
+            <div class="iqr-kpi"><p class="iqr-kpi-label">Active inventory</p><p class="iqr-kpi-value">$22.4M</p><p class="iqr-kpi-change pos">▼ -$2.23M (-9.1%) ✓</p></div>
+            <div class="iqr-kpi"><p class="iqr-kpi-label">Excess inventory</p><p class="iqr-kpi-value">$614K</p><p class="iqr-kpi-change pos">▼ -$27K (-4.2%) ✓</p></div>
+            <div class="iqr-kpi"><p class="iqr-kpi-label">Obsolete inventory</p><p class="iqr-kpi-value">$557K</p><p class="iqr-kpi-change warn">▲ +$2K (flat)</p></div>
+            <div class="iqr-kpi"><p class="iqr-kpi-label">Active / Slowing</p><p class="iqr-kpi-value">$168K</p><p class="iqr-kpi-change pos">▼ -$4K (-2.2%) ✓</p></div>
+          </div>
+          <div class="iqr-total">
+            <p style="font-size:11px; color:#73726c; margin-bottom:2px; font-weight:500;">Total inventory value</p>
+            <p style="font-size:16px; font-weight:500; color:#1a1a18;">$23.8M</p>
+            <p style="font-size:11px; color:#3b6d11; margin-top:2px;">▼ -$2.26M vs Week 29 start (-8.7%) ✓</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="section">
+        <p class="section-title">Net cost by adjustment category ($)</p>
+        <div class="legend">
+          <span><span class="legend-dot" style="background:#a32d2d;"></span>Negative</span>
+          <span><span class="legend-dot" style="background:#3b6d11;"></span>Positive</span>
+        </div>
+        <div class="chart-wrap" style="height:300px;">
+          <canvas id="btCatChart"></canvas>
+        </div>
+      </div>
+      <div class="section">
+        <p class="section-title">Net cost by location</p>
+        <table>
+          <thead><tr><th>Rank</th><th>Location</th><th>Net cost</th><th>% of total</th></tr></thead>
+          <tbody id="btLocTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="full-section">
+      <p class="section-title">Net cost by taxonomy ($)</p>
+      <div class="legend">
+        <span><span class="legend-dot" style="background:#a32d2d;"></span>Negative</span>
+        <span><span class="legend-dot" style="background:#3b6d11;"></span>Positive</span>
+      </div>
+      <div class="chart-wrap" style="height:210px;">
+        <canvas id="btTaxChart"></canvas>
+      </div>
+    </div>
+
+    <div class="wow-section">
+      <p class="section-title" style="margin-bottom:14px;">Week 28 vs Week 29 — comparison</p>
+      <div class="wow-kpi-row">
+        <div class="wow-kpi">
+          <p class="wow-kpi-label">Net cost</p>
+          <div class="wow-kpi-vals">
+            <span class="wow-week">Wk 28</span><span class="wow-val pos">+$2,969</span>
+            <span class="wow-arrow">→</span>
+            <span class="wow-week">Wk 29</span><span class="wow-val neg">-$36,391</span>
+            <span class="wow-delta neg">▼ -$39,360</span>
+          </div>
+        </div>
+        <div class="wow-kpi">
+          <p class="wow-kpi-label">Positive movements</p>
+          <div class="wow-kpi-vals">
+            <span class="wow-week">Wk 28</span><span class="wow-val pos">+$95,287</span>
+            <span class="wow-arrow">→</span>
+            <span class="wow-week">Wk 29</span><span class="wow-val pos">+$153,441</span>
+            <span class="wow-delta pos">▲ +$58,154</span>
+          </div>
+        </div>
+        <div class="wow-kpi">
+          <p class="wow-kpi-label">Negative movements</p>
+          <div class="wow-kpi-vals">
+            <span class="wow-week">Wk 28</span><span class="wow-val neg">-$92,318</span>
+            <span class="wow-arrow">→</span>
+            <span class="wow-week">Wk 29</span><span class="wow-val neg">-$189,832</span>
+            <span class="wow-delta neg">▼ -$97,514</span>
+          </div>
+        </div>
+        <div class="wow-kpi">
+          <p class="wow-kpi-label">Net unit variance</p>
+          <div class="wow-kpi-vals">
+            <span class="wow-week">Wk 28</span><span class="wow-val pos">+8,153</span>
+            <span class="wow-arrow">→</span>
+            <span class="wow-week">Wk 29</span><span class="wow-val neg">-36,043</span>
+            <span class="wow-delta neg">▼ -44,196</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:14px;">
+        <div>
+          <p style="font-size:12px; font-weight:500; color:#73726c; margin-bottom:8px;">Net cost by category — Wk 28 vs Wk 29</p>
+          <div class="chart-wrap" style="height:300px;"><canvas id="btCatWowChart"></canvas></div>
+        </div>
+        <div>
+          <p style="font-size:12px; font-weight:500; color:#73726c; margin-bottom:8px;">Net cost by location — Wk 28 vs Wk 29</p>
+          <table style="width:100%; border-collapse:collapse; font-size:12px;">
+            <thead>
+              <tr style="border-bottom:0.5px solid #c8c7c0;">
+                <th style="text-align:left; padding:5px 8px 7px 0; font-weight:500; color:#73726c; font-size:11px;">Rank</th>
+                <th style="text-align:left; padding:5px 8px 7px 0; font-weight:500; color:#73726c; font-size:11px;">Location</th>
+                <th style="text-align:right; padding:5px 8px 7px 0; font-weight:500; color:#73726c; font-size:11px;">Wk 28</th>
+                <th style="text-align:right; padding:5px 0 7px 0; font-weight:500; color:#73726c; font-size:11px;">Wk 29</th>
+                <th style="text-align:right; padding:5px 0 7px 8px; font-weight:500; color:#73726c; font-size:11px;">Change</th>
+              </tr>
+            </thead>
+            <tbody id="btLocWowTable"></tbody>
+          </table>
+        </div>
+      </div>
+      <div style="margin-top:14px;">
+        <p style="font-size:12px; font-weight:500; color:#73726c; margin-bottom:8px;">Net cost by taxonomy — Wk 28 vs Wk 29</p>
+        <div class="chart-wrap" style="height:210px;"><canvas id="btTaxWowChart"></canvas></div>
+      </div>
+      <!-- ═══ BT WEEK-ON-WEEK COMMENTARY — edit the 4 insight cards below ═══ -->
+      <div style="margin-top:14px;">
+        <p style="font-size:12px; font-weight:500; color:#73726c; margin-bottom:8px;">Key week-on-week movements</p>
+        <div class="commentary-grid">
+          <div class="card pos">
+            <div class="card-header"><p class="card-title">BT Active breaks below the July $23M target — milestone achieved</p><span class="card-value pos">$24.7M → $22.4M (-$2.23M, -9.1%) ✓</span></div>
+            <p class="card-body">BT Active dropped -$2.23M heading into Week 30, bringing the opening position to $22.4M — below the July $23M inventory budget target for the first time. Combined with Week 27's -$2.49M decline, BT has reduced Active inventory by nearly $4.5M over three weeks. Excess (-$27K) and Slowing (-$4K) also improved. This is the primary milestone of the inventory reduction program.</p>
+          </div>
+          <div class="card neg">
+            <div class="card-header"><p class="card-title">Wills Point: final dovetail pair posting in two categories simultaneously</p><span class="card-value neg">Wk28: -$3,713 → Wk29: -$16,704</span></div>
+            <p class="card-body">The last remaining dovetail pair — 5433754-B (*DNO*) — posted in both Interplant Transfer (-$20,412 / +$15,199) and Scrap Cut Sheets (-$8,913 / +$11,783) in the same week. The same DNO item appearing in two categories simultaneously is unusual and warrants review to confirm the correct disposal method. Additional scrap cut sheets on flat bar (FB 2x3/8) and WF IB 12x16# structural steel items added to the negative.</p>
+          </div>
+          <div class="card neg">
+            <div class="card-header"><p class="card-title">Batavia: ninth consecutive week — scissor lift offset weakened this week</p><span class="card-value neg">Wk28: -$2,157 → Wk29: -$10,047</span></div>
+            <p class="card-body">Scissor lift cut sheets continue for a ninth consecutive week at Batavia (Weeks 21–29). Unlike prior weeks where the T-14 Hoist nearly fully offset the gross negative, this week the Hoist (+$47,514) only covered approximately 75% of the Scissor Lift (-$41,369) and Cylinder (-$11,458) combined, resulting in a larger net than usual. Cycle count shortfall on Jack SW Pipe MT 2K (-$3,652) added to the location negative. Completion date has been outstanding since Week 21.</p>
+          </div>
+          <div class="card warn">
+            <div class="card-header"><p class="card-title">Mt Pleasant: cycle count and shipping funnel both elevated for third straight week</p><span class="card-value warn">Wk28: -$9,718 → Wk29: -$10,873</span></div>
+            <p class="card-body">Mt Pleasant is negative for a third consecutive week. Cycle count shortfalls -$15,974 led by Hydraulic Fluid >400DEG (-$4,764), Wire 16Ga 3 Way Ribbon Bonded (-$3,786) and Wire 14Ga 2 Way Brake (-$3,695). Shipping funnel -$15,302 led by Lumber #2 Treated Pine (-$4,950). Engineering disc credits (+$8,757) and (blank) category items (+$9,430 on FAB CHL Board Cap and Ramp Assy 5-Ft Mega Ramp) provide partial offsets. The (blank) categorization continues — these items need correct coding.</p>
+          </div>
+        </div>
+      </div>
+  </div>
+
+  <!-- ════════ PJ ════════ -->
+  <div class="entity-block">
+    <p class="entity-label">PJ Trailers (PJ) &nbsp;·&nbsp; 248 line items &nbsp;·&nbsp; 228 SKUs</p>
+
+    <div class="kpi-grid">
+      <div class="kpi"><p class="kpi-label">Net cost adjustment</p><p class="kpi-value neg">-$62,277</p></div>
+      <div class="kpi"><p class="kpi-label">Total positive movements</p><p class="kpi-value pos">+$170,580</p></div>
+      <div class="kpi"><p class="kpi-label">Total negative movements</p><p class="kpi-value neg">-$232,858</p></div>
+      <div class="kpi"><p class="kpi-label">Net unit variance</p><p class="kpi-value neg">-146,295</p></div>
+    </div>
+
+    <div class="iqr-section">
+      <p class="section-title">Inventory quality report (IQR) — Week 9 to Week 30</p>
+      <p class="section-subtitle">Values in $M &nbsp;·&nbsp; Comparing Week 30 start vs Week 29 start</p>
+      <div class="iqr-grid">
+        <div class="chart-wrap" style="height:240px;">
+          <canvas id="pjIqrChart"></canvas>
+        </div>
+        <div>
+          <p style="font-size:11px; font-weight:500; color:#73726c; margin-bottom:8px;">Week 30 start vs Week 29 start</p>
+          <div class="iqr-kpi-grid">
+            <div class="iqr-kpi"><p class="iqr-kpi-label">Active inventory</p><p class="iqr-kpi-value">$21.5M</p><p class="iqr-kpi-change warn">▲ +$396K (+1.9%) ⚠</p></div>
+            <div class="iqr-kpi"><p class="iqr-kpi-label">Excess inventory</p><p class="iqr-kpi-value">$1.50M</p><p class="iqr-kpi-change warn">▲ +$31K (+2.1%) ⚠</p></div>
+            <div class="iqr-kpi"><p class="iqr-kpi-label">Obsolete inventory</p><p class="iqr-kpi-value">$719K</p><p class="iqr-kpi-change pos">▼ -$4K (-0.5%) ✓</p></div>
+            <div class="iqr-kpi"><p class="iqr-kpi-label">Active / Slowing</p><p class="iqr-kpi-value">$342K</p><p class="iqr-kpi-change pos">▼ -$2K (-0.5%) ✓</p></div>
+          </div>
+          <div class="iqr-total">
+            <p style="font-size:11px; color:#73726c; margin-bottom:2px; font-weight:500;">Total inventory value</p>
+            <p style="font-size:16px; font-weight:500; color:#1a1a18;">$24.0M</p>
+            <p style="font-size:11px; color:#3b6d11; margin-top:2px;">▼ -$43K vs Week 27 start (-0.2%) ✓</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="section">
+        <p class="section-title">Net cost by adjustment category ($)</p>
+        <div class="legend">
+          <span><span class="legend-dot" style="background:#a32d2d;"></span>Negative</span>
+          <span><span class="legend-dot" style="background:#3b6d11;"></span>Positive</span>
+        </div>
+        <div class="chart-wrap" style="height:200px;">
+          <canvas id="pjCatChart"></canvas>
+        </div>
+      </div>
+      <div class="section">
+        <p class="section-title">Net cost by location</p>
+        <table>
+          <thead><tr><th>Rank</th><th>Location</th><th>Net cost</th><th>% of total</th></tr></thead>
+          <tbody id="pjLocTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="full-section">
+      <p class="section-title">Net cost by taxonomy ($)</p>
+      <div class="legend">
+        <span><span class="legend-dot" style="background:#a32d2d;"></span>Negative</span>
+        <span><span class="legend-dot" style="background:#3b6d11;"></span>Positive</span>
+      </div>
+      <div class="chart-wrap" style="height:230px;">
+        <canvas id="pjTaxChart"></canvas>
+      </div>
+    </div>
+
+        <div class="wow-section">
+      <p class="section-title" style="margin-bottom:14px;">Week 28 vs Week 29 — comparison</p>
+      <div class="wow-kpi-row">
+        <div class="wow-kpi">
+          <p class="wow-kpi-label">Net cost</p>
+          <div class="wow-kpi-vals">
+            <span class="wow-week">Wk 27</span><span class="wow-val neg">-$19,904</span>
+            <span class="wow-arrow">→</span>
+            <span class="wow-week">Wk 28</span><span class="wow-val neg">-$51,295</span>
+            <span class="wow-delta neg">▼ -$31,391</span>
+          </div>
+        </div>
+        <div class="wow-kpi">
+          <p class="wow-kpi-label">Positive movements</p>
+          <div class="wow-kpi-vals">
+            <span class="wow-week">Wk 27</span><span class="wow-val pos">+$77,678</span>
+            <span class="wow-arrow">→</span>
+            <span class="wow-week">Wk 28</span><span class="wow-val pos">+$175,740</span>
+            <span class="wow-delta pos">▲ +$98,062</span>
+          </div>
+        </div>
+        <div class="wow-kpi">
+          <p class="wow-kpi-label">Negative movements</p>
+          <div class="wow-kpi-vals">
+            <span class="wow-week">Wk 27</span><span class="wow-val neg">-$97,582</span>
+            <span class="wow-arrow">→</span>
+            <span class="wow-week">Wk 28</span><span class="wow-val neg">-$227,035</span>
+            <span class="wow-delta neg">▼ -$129,453</span>
+          </div>
+        </div>
+        <div class="wow-kpi">
+          <p class="wow-kpi-label">Net unit variance</p>
+          <div class="wow-kpi-vals">
+            <span class="wow-week">Wk 27</span><span class="wow-val neg">-46,379</span>
+            <span class="wow-arrow">→</span>
+            <span class="wow-week">Wk 28</span><span class="wow-val neg">-38,091</span>
+            <span class="wow-delta pos">▲ +8,288</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:14px;">
+        <div>
+          <p style="font-size:12px; font-weight:500; color:#73726c; margin-bottom:8px;">Net cost by category — Wk 28 vs Wk 29</p>
+          <div class="chart-wrap" style="height:230px;"><canvas id="pjCatWowChart"></canvas></div>
+        </div>
+        <div>
+          <p style="font-size:12px; font-weight:500; color:#73726c; margin-bottom:8px;">Net cost by location — Wk 28 vs Wk 29</p>
+          <table style="width:100%; border-collapse:collapse; font-size:12px;">
+            <thead>
+              <tr style="border-bottom:0.5px solid #c8c7c0;">
+                <th style="text-align:left; padding:5px 8px 7px 0; font-weight:500; color:#73726c; font-size:11px;">Rank</th>
+                <th style="text-align:left; padding:5px 8px 7px 0; font-weight:500; color:#73726c; font-size:11px;">Location</th>
+                <th style="text-align:right; padding:5px 8px 7px 0; font-weight:500; color:#73726c; font-size:11px;">Wk 27</th>
+                <th style="text-align:right; padding:5px 0 7px 0; font-weight:500; color:#73726c; font-size:11px;">Wk 28</th>
+                <th style="text-align:right; padding:5px 0 7px 8px; font-weight:500; color:#73726c; font-size:11px;">Change</th>
+              </tr>
+            </thead>
+            <tbody id="pjLocWowTable"></tbody>
+          </table>
+        </div>
+      </div>
+      <div style="margin-top:14px;">
+        <p style="font-size:12px; font-weight:500; color:#73726c; margin-bottom:8px;">Net cost by taxonomy — Wk 28 vs Wk 29</p>
+        <div class="chart-wrap" style="height:230px;"><canvas id="pjTaxWowChart"></canvas></div>
+      </div>
+      <!-- ═══ PJ WEEK-ON-WEEK COMMENTARY — edit the 4 insight cards below ═══ -->
+      <div style="margin-top:14px;">
+        <p style="font-size:12px; font-weight:500; color:#73726c; margin-bottom:8px;">Key week-on-week movements</p>
+        <div class="commentary-grid">
+          <div class="card neg">
+            <div class="card-header"><p class="card-title">Mexico: scrap drop and Floor Plate cycle count swing</p><span class="card-value neg">Wk27: -$5,107 → Wk28: -$33,348</span></div>
+            <p class="card-body">Mexico is the worst PJ location this week. Scrap drop -$28,405 dominated by Lumber 2x6x20' (-$5,347), Channel 4x4.5# (-$4,038), Tubing Square 2x2x11ga (-$3,079) and Plate 3/16 Smooth (-$3,060). Floor Plate SPM753 (60"x156-1/2" 10ga) posted a cycle count shortfall of -$32,766 and a credit of +$33,892 in the same week — suggesting a recount took place. Mexico waste elimination -$6,465 (Merchant) is included in the scrap drop total.</p>
+          </div>
+          <div class="card neg">
+            <div class="card-header"><p class="card-title">Sumner: I-Beam reverse production returns alongside retail transfers</p><span class="card-value neg">Wk27: -$38,161 → Wk28: -$26,268</span></div>
+            <p class="card-body">Sumner improved but remains negative. I-Beam 12x19lb (-$12,812) and 12x14lb (-$5,205) posted large cycle count shortfalls — consistent with the reverse production pattern seen in prior weeks. Retail Manuf Transfer -$15,521 on axle (AX10947258BTB) and jack (JA7951208-B) items. Scrap Damaged -$12,114 led by D3 Bumper Assembly (-$2,436) and T6/T7 latch (-$2,267). Partially offset by Fender 9" cycle count credit (+$4,574), Bumper Assy DL (+$4,591) and WF IB cycle count credits.</p>
+          </div>
+          <div class="card neg">
+            <div class="card-header"><p class="card-title">Mt Orab: DNO/active revision pairs on ramp and side assembly</p><span class="card-value neg">Wk27: -$6,421 → Wk28: -$19,119</span></div>
+            <p class="card-body">Mt Orab deteriorated sharply. LP HD GN Monster Flipover Ramp V2 posted a DNO write-off (ASRLPGNHD316-WV2-B, -$35,263) and active revision credit (ASRLPGNHD316-WV2-C, +$35,972) — net +$709 on the revision pair. GN FAB Side Assy 57x106 posted similarly (ASGN10657DS -$16,922 / ASGN10657DS-B +$16,928) — net +$6. Scrap drop -$5,968 and scrap damaged -$3,790 (Blackwood PRO lumber and Plate 10ga) are the real negatives alongside a reverse production drag of -$2,730.</p>
+          </div>
+          <div class="card warn">
+            <div class="card-header"><p class="card-title">Waste elimination rebounded to -$9,627 — all Merchant steel, all three locations</p><span class="card-value warn">Wk27: -$4,986 → Wk28: -$9,627</span></div>
+            <p class="card-body">After reaching near-zero in Week 27, waste elimination rebounded to -$9,627 this week. All three locations active simultaneously — Mexico -$6,465, Mt Orab -$2,136 and Sumner -$1,027. All activity is Merchant steel category. Program grand total now stands at -$278,584 through Week 28. The rebound suggests the program is not yet complete despite last week's near-zero signal.</p>
+          </div>
+        </div>
+      </div>
+
+    <!-- ═══ WASTE ELIMINATION COMMENTARY — edit the 4 observation cards below ═══ -->
+    <div class="wow-section" style="margin-top:1.75rem;">
+      <p class="section-title" style="margin-bottom:4px;">PJ — Steel scrap waste elimination trend &nbsp;·&nbsp; Weeks 14–29</p>
+      <p class="section-subtitle" style="margin-bottom:14px;">Mexico · Mt Orab · Sumner &nbsp;·&nbsp; Merchant, Beam, Sheet, Tube &nbsp;·&nbsp; Note: Scrap Drop category includes both waste elimination program activity and other scrap. Program totals shown here are derived from the dedicated Waste Elimination tracking tab.</p>
+      <div style="display:grid; grid-template-columns:1.4fr 0.6fr; gap:16px; margin-bottom:1.5rem;">
+        <div>
+          <p style="font-size:12px; font-weight:500; color:#73726c; margin-bottom:8px;">Total weekly waste elimination spend ($)</p>
+          <div class="chart-wrap" style="height:220px;"><canvas id="scrapTrendChart"></canvas></div>
+        </div>
+        <div>
+          <p style="font-size:12px; font-weight:500; color:#73726c; margin-bottom:8px;">Week 29 snapshot</p>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div class="iqr-kpi"><p class="iqr-kpi-label">Wk 29 program waste</p><p class="iqr-kpi-value">-$9,216</p><p class="iqr-kpi-change warn">▼ -$9,216 — Mexico + Sumner Merchant</p></div>
+            <div class="iqr-kpi"><p class="iqr-kpi-label">vs Week 14 peak</p><p class="iqr-kpi-value">-$155,592</p><p class="iqr-kpi-change pos">▼ -$82,162 (53%)</p></div>
+            <div class="iqr-kpi"><p class="iqr-kpi-label">Mexico: consecutive weeks</p><p class="iqr-kpi-value">Wks 14–24</p><p class="iqr-kpi-change warn">⚠ No zero-waste week</p></div>
+            <div class="iqr-kpi"><p class="iqr-kpi-label">Total program Wk 14–29</p><p class="iqr-kpi-value">-$289,513</p><p class="iqr-kpi-change warn">+$9,216 added this week</p></div>
+          </div>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:1.5rem;">
+        <div>
+          <p style="font-size:12px; font-weight:500; color:#73726c; margin-bottom:8px;">Weekly program waste by location ($)</p>
+          <div class="chart-wrap" style="height:220px;"><canvas id="scrapByLocChart"></canvas></div>
+        </div>
+        <div>
+          <p style="font-size:12px; font-weight:500; color:#73726c; margin-bottom:8px;">Weekly program waste by material ($)</p>
+          <div class="chart-wrap" style="height:220px;"><canvas id="scrapByCatChart"></canvas></div>
+        </div>
+      </div>
+      <p style="font-size:13px; font-weight:500; color:#73726c; margin-bottom:10px;">Key observations</p>
+      <div class="commentary-grid">
+        <div class="card warn">
+          <div class="card-header"><p class="card-title">Program rebounds to -$42,440 — all three locations active</p><span class="card-value warn">-$42,440 Wk25 vs -$19,659 Wk24</span></div>
+          <p class="card-body">Waste elimination activity increased from the Week 24 low back to -$42,440 with all three locations posting simultaneously. Sumner is this week's largest contributor (-$13,548) driven by I-Beam Beam category activity. Mexico continues at -$23,282 (Merchant, Sheet, Tube). Mt Orab -$5,611 (Beam only). Program grand total now stands at -$606,419 through Week 25.</p>
+        </div>
+        <div class="card neg">
+          <div class="card-header"><p class="card-title">Mexico: twelve consecutive weeks, no zero-waste week</p><span class="card-value neg">-$285,980 cumulative</span></div>
+          <p class="card-body">Mexico accounts for 47% of total program waste (-$285,980 of -$606,419) and has posted losses in every single week since Week 14. Week 25 at -$23,282 is consistent with recent weeks. Merchant (-$10,187) and Sheet (-$10,983) steel remain the dominant categories.</p>
+        </div>
+        <div class="card warn">
+          <div class="card-header"><p class="card-title">Sumner: largest weekly posting since Week 14</p><span class="card-value warn">-$13,548 Wk25 (Beam only)</span></div>
+          <p class="card-body">Sumner posted -$13,548 this week — entirely Beam category (I-Beam 12x19lb). This mirrors the I-Beam activity appearing in Sumner's reverse production and Mt Orab's triple match errors this week, suggesting a structural steel cost issue affecting multiple categories simultaneously. Cumulative Sumner total is now -$153,601.</p>
+        </div>
+        <div class="card pos">
+          <div class="card-header"><p class="card-title">Mt Orab: modest activity — Beam only</p><span class="card-value pos">-$5,611 Wk25</span></div>
+          <p class="card-body">Mt Orab posted a modest -$5,611 (Beam only) this week. Activity remains well below the Week 23 peak of -$43,616. Cumulative Mt Orab total is now -$166,839. Program total through Week 25: -$606,419.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ BW ════════ -->
+  <div class="entity-block">
+    <p class="entity-label">B-Wise (BW) &nbsp;·&nbsp; Bonne Terre, MO &nbsp;·&nbsp; 231 line items</p>
+
+    <div class="kpi-grid">
+       <div class="kpi"><p class="kpi-label">Net cost adjustment</p><p class="kpi-value neg">-$6,702</p></div>
+      <div class="kpi"><p class="kpi-label">Total positive movements</p><p class="kpi-value pos">+$18,947</p></div>
+      <div class="kpi"><p class="kpi-label">Total negative movements</p><p class="kpi-value neg">-$25,649</p></div>
+      <div class="kpi"><p class="kpi-label">Net unit variance</p><p class="kpi-value warn">N/A</p></div>
+    </div>
+
+    <div class="iqr-section">
+      <p class="section-title">Inventory quality report (IQR) — Week 9 to Week 30</p>
+      <p class="section-subtitle">Values in $M &nbsp;·&nbsp; Comparing Week 30 start vs Week 29 start &nbsp;·&nbsp; First week of BW IQR reporting</p>
+      <div class="iqr-grid">
+        <div class="chart-wrap" style="height:240px;"><canvas id="bwIqrChart"></canvas></div>
+        <div>
+          <p style="font-size:11px; font-weight:500; color:#73726c; margin-bottom:8px;">Week 30 start vs Week 29 start</p>
+          <div class="iqr-kpi-grid">
+            <div class="iqr-kpi"><p class="iqr-kpi-label">Active inventory</p><p class="iqr-kpi-value">$4.76M</p><p class="iqr-kpi-change warn">▲ +$39K (+0.8%)</p></div>
+            <div class="iqr-kpi"><p class="iqr-kpi-label">Excess inventory</p><p class="iqr-kpi-value">$13K</p><p class="iqr-kpi-change pos">▼ -$5K (-28.9%) ✓</p></div>
+            <div class="iqr-kpi"><p class="iqr-kpi-label">Obsolete inventory</p><p class="iqr-kpi-value">$143K</p><p class="iqr-kpi-change pos">▼ -$4K (-2.6%) ✓</p></div>
+            <div class="iqr-kpi"><p class="iqr-kpi-label">Active / Slowing</p><p class="iqr-kpi-value">$41K</p><p class="iqr-kpi-change pos">▼ -$11K (-21.1%) ✓</p></div>
+          </div>
+          <div style="margin-top:16px; padding:12px; background:#f5f5f3; border-radius:6px;">
+            <p style="font-size:16px; font-weight:500; color:#1a1a18;">$5.02M</p>
+            <p style="font-size:11px; color:#a32d2d; margin-top:2px;">▲ +$57K vs Week 29 start (+1.1%) ⚠</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="section">
+        <p class="section-title">Net cost by adjustment category ($)</p>
+        <div class="chart-wrap" style="height:220px;"><canvas id="bwCatChart"></canvas></div>
+      </div>
+      <div class="section">
+        <p class="section-title">Net cost by location</p>
+        <p style="font-size:11px; color:#73726c; margin-bottom:12px;">Single location — Bonne Terre, MO</p>
+        <table style="width:100%; border-collapse:collapse; font-size:12px;">
+          <thead><tr style="border-bottom:0.5px solid #c8c7c0;">
+            <th style="text-align:left; padding:5px 8px 7px 0; font-weight:500; color:#73726c; font-size:11px;">Location</th>
+            <th style="text-align:right; padding:5px 0 7px 0; font-weight:500; color:#73726c; font-size:11px;">Week 26</th>
+          </tr></thead>
+          <tbody><tr style="border-bottom:0.5px solid #e8e7e0;">
+            <td style="padding:7px 8px 7px 0; font-size:12px;">B-Wise (Bonne Terre)</td>
+            <td style="text-align:right; padding:7px 0; font-size:12px; color:#a32d2d; font-weight:500;">-$11,590</td>
+          </tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <p class="section-title">Net cost by taxonomy ($)</p>
+      <div class="chart-wrap" style="height:200px;"><canvas id="bwTaxChart"></canvas></div>
+    </div>
+
+    <div class="wow-section">
+      <p class="section-title" style="margin-bottom:14px;">Week 26 — BW adjustment data &nbsp;·&nbsp; Week 27 adjustment pending</p>
+      <div style="margin-top:14px;">
+        <p style="font-size:12px; font-weight:500; color:#73726c; margin-bottom:8px;">Key drivers — Week 26</p>
+        <div class="commentary-grid">
+          <div class="card neg">
+            <div class="card-header"><p class="card-title">Cycle count shortfalls — paint and structural items</p><span class="card-value neg">-$7,655 cycle count</span></div>
+            <p class="card-body">Cycle count is the largest negative category at -$7,655. Black Liquid 1 Gal (T700501, -$3,318) and Caulk for Trailer 5Gal (T809502, -$3,151) are the two largest shortfalls — both paint and sealant consumables. Angle 3x2x3/16" 20' (R301804, -$1,875) adds a structural steel shortfall. Partially offset by Stud 1/4-20x1" SS Arc cycle count credit (+$1,624) and Rec Tube (+$392).</p>
+          </div>
+          <div class="card neg">
+            <div class="card-header"><p class="card-title">Drop (scrap) and BOM adjustments</p><span class="card-value neg">-$4,075 drop · -$1,246 BOM</span></div>
+            <p class="card-body">Scrap drop at -$4,075 is led by Tube Rect 2x6x1/8x40' (-$1,149), Tube Rect 2x6x1/4x40' (-$307) and Channel 5"x6.7# (-$307). BOM adjustment of -$1,246 on Tandem Line Kit Spring Axle (T600382) combined with a Missing posting of -$778 on the same SKU suggests a receiving or BOM alignment issue on this item.</p>
+          </div>
+          <div class="card pos">
+            <div class="card-header"><p class="card-title">IQR: strong opening — Active, Excess and Obsolete all declining</p><span class="card-value pos">Active -$85K · Excess -$7K · Obsolete -$7K ✓</span></div>
+            <p class="card-body">BW's first IQR reading shows a positive picture heading into Week 27. Active, Excess and Obsolete are all declining simultaneously. Total inventory at $4.93M. Active/Slowing ticked up +$9K (+20.6%) — the one item to monitor as the baseline builds over coming weeks.</p>
+          </div>
+          <div class="card warn">
+            <div class="card-header"><p class="card-title">T600382 — Tandem Line Kit: BOM and Missing on same SKU same week</p><span class="card-value warn">-$2,024 combined</span></div>
+            <p class="card-body">Item T600382 (Tandem Line Kit Spring Axle) posted both a BOM adjustment (-$1,246) and a Missing posting (-$778) in the same week. This warrants review to confirm the item is physically on hand and whether the BOM and receipt postings are correctly aligned.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const negCol = '#a32d2d', posCol = '#3b6d11', warnCol = '#b07500';
+const wk21col = 'rgba(100,120,180,0.55)', wk21bdr = 'rgba(100,120,180,0.85)';
+const wk22col = 'rgba(163,45,45,0.55)',   wk22bdr = 'rgba(163,45,45,0.85)';
+const tc = 'rgba(0,0,0,0.45)', gc = 'rgba(0,0,0,0.06)';
+const kFmt = v => (v < 0 ? '-' : '') + '$' + Math.abs(v / 1000).toFixed(0) + 'k';
+
+function barOpts() {
+  return { responsive:true, maintainAspectRatio:false, indexAxis:'y',
+    plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>' $'+Math.round(c.parsed.x).toLocaleString()}}},
+    scales:{x:{ticks:{color:tc,callback:kFmt},grid:{color:gc}},y:{ticks:{color:tc,font:{size:11}},grid:{display:false}}}};
+}
+function wowOpts() {
+  return { responsive:true, maintainAspectRatio:false, indexAxis:'y',
+    plugins:{legend:{position:'bottom',labels:{color:tc,font:{size:11},boxWidth:10,padding:10}},
+      tooltip:{callbacks:{label:c=>` ${c.dataset.label}: $${Math.round(c.parsed.x).toLocaleString()}`}}},
+    scales:{x:{ticks:{color:tc,callback:kFmt},grid:{color:gc}},y:{ticks:{color:tc,font:{size:11}},grid:{display:false}}}};
+}
+function iqrOpts() {
+  return { responsive:true, maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{position:'bottom',labels:{color:tc,font:{size:11},boxWidth:12,padding:10}},
+      tooltip:{callbacks:{label:c=>` ${c.dataset.label}: $${c.parsed.y.toLocaleString()}K`}}},
+    scales:{x:{ticks:{color:tc,font:{size:10}},grid:{color:gc}},
+      yA:{position:'left',ticks:{color:'#3b6d11',font:{size:10},callback:v=>'$'+(v/1000).toFixed(0)+'M'},grid:{color:gc}},
+      yB:{position:'right',ticks:{color:tc,font:{size:10},callback:v=>'$'+v+'K'},grid:{display:false}}}};
+}
+
+// BT IQR
+new Chart(document.getElementById('btIqrChart'),{type:'line',data:{
+  labels:['Wk9','Wk10','Wk11','Wk12','Wk13','Wk14','Wk15','Wk16','Wk17','Wk18','Wk19','Wk20','Wk21','Wk22','Wk23','Wk24','Wk25','Wk26','Wk27','Wk28','Wk29','Wk30'],
+  datasets:[
+    {label:'Active ($M)',data:[22446,22201,23087,23734,24313,25243,25431,25960,25904,25787,26413,25983,27459,27340,27945,28485,28228,27289,26546,24052,24651,22418],borderColor:'#3b6d11',backgroundColor:'rgba(59,109,17,0.07)',borderWidth:2,pointRadius:3,tension:0.3,yAxisID:'yA'},
+    {label:'Excess ($M)',data:[142,127,148,148,146,136,133,133,496,612,498,544,602,664,659,493,518,558,738,550,641,614],borderColor:'#b07500',backgroundColor:'transparent',borderWidth:1.5,pointRadius:2,borderDash:[4,3],tension:0.3,yAxisID:'yB'},
+    {label:'Obsolete ($M)',data:[1195,1095,966,968,1010,1074,935,953,513,511,511,511,511,510,511,562,560,561,669,554,556,557],borderColor:'#a32d2d',backgroundColor:'transparent',borderWidth:1.5,pointRadius:2,borderDash:[4,3],tension:0.3,yAxisID:'yB'},
+    {label:'Act/Slowing ($M)',data:[330,336,386,318,315,404,404,401,395,369,280,277,275,276,276,214,209,209,221,178,172,168],borderColor:'#6b6b65',backgroundColor:'transparent',borderWidth:1.5,pointRadius:2,borderDash:[2,3],tension:0.3,yAxisID:'yB'},
+  ]},options:iqrOpts()});
+
+// PJ IQR
+new Chart(document.getElementById('pjIqrChart'),{type:'line',data:{
+  labels:['Wk9','Wk11','Wk12','Wk13','Wk14','Wk17','Wk18','Wk19','Wk20','Wk21','Wk22','Wk23','Wk24','Wk25','Wk26','Wk27','Wk28','Wk29','Wk30'],
+  datasets:[
+    {label:'Active ($M)',data:[19985,19817,19889,20060,21175,21175,21320,21239,21156,21551,21575,21875,22407,22610,21924,21448,21452,21151,21547],borderColor:'#3b6d11',backgroundColor:'rgba(59,109,17,0.07)',borderWidth:2,pointRadius:3,tension:0.3,yAxisID:'yA'},
+    {label:'Excess ($M)',data:[1929,1350,1297,1324,1991,1991,1939,1902,1673,1887,2069,2065,1580,1629,1663,1660,1464,1468,1499],borderColor:'#b07500',backgroundColor:'transparent',borderWidth:1.5,pointRadius:2,borderDash:[4,3],tension:0.3,yAxisID:'yB'},
+    {label:'Obsolete ($M)',data:[550,603,596,573,564,564,583,625,632,707,682,724,768,753,754,732,736,723,719],borderColor:'#a32d2d',backgroundColor:'transparent',borderWidth:1.5,pointRadius:2,borderDash:[4,3],tension:0.3,yAxisID:'yB'},
+    {label:'Act/Slowing ($M)',data:[718,672,666,661,334,334,332,131,130,124,128,127,203,204,204,201,345,343,342],borderColor:'#6b6b65',backgroundColor:'transparent',borderWidth:1.5,pointRadius:2,borderDash:[2,3],tension:0.3,yAxisID:'yB'},
+  ]},options:iqrOpts()});
+
+
+// EDIT: BT CATEGORY CHART — update labels and data array values
+new Chart(document.getElementById('btCatChart'),{type:'bar',data:{
+  labels:['Cycle Count','Shipping Funnel','Scrap - Cut Sheets','Interplant Transfer','Scrap - Damaged','Trailer Completion','Triple Match Errors','Engineering Disc','(Blank)'],
+  datasets:[{data:[-21757,-18730,-11502,-5213,-171,1857,2021,7673,9430],backgroundColor:[negCol,negCol,negCol,negCol,negCol,posCol,posCol,posCol,posCol],borderWidth:0}]},options:barOpts()});
+
+
+// EDIT: BT TAXONOMY CHART — update labels and data array values
+new Chart(document.getElementById('btTaxChart'),{type:'bar',data:{
+  labels:['Hardware','Tires & Wheels','No Prior Tax','Lumber','Paint','Electronics','Primary Metals','Axles & Susp.','Fabrication'],
+  datasets:[{data:[-18761,-12963,-10496,-1852,-1442,-1423,-1145,288,35391],backgroundColor:[negCol,negCol,negCol,negCol,negCol,posCol,posCol,posCol],borderWidth:0}]},options:barOpts()});
+
+
+// EDIT: PJ CATEGORY CHART — update labels and data array values
+new Chart(document.getElementById('pjCatChart'),{type:'bar',data:{
+  labels:['Cycle Count','Scrap - Drop','Scrap - Damaged','Retail - Manuf Trans.','Scrap - Cut Sheets','Reverse Prod'],
+  datasets:[{data:[-32848,-20909,-17480,-2447,-1763,6986],backgroundColor:[negCol,negCol,negCol,negCol,negCol,posCol],borderWidth:0}]},options:barOpts()});
+
+
+// EDIT: PJ TAXONOMY CHART — update labels and data array values
+new Chart(document.getElementById('pjTaxChart'),{type:'bar',data:{
+  labels:['Fabrication','Axles & Susp.','Lumber','Electronics','Hardware','Paint','Hydraulics','Primary Metals'],
+  datasets:[{data:[-37046,-7832,-6275,-3597,-1988,3870,6665,42969],backgroundColor:[negCol,negCol,negCol,negCol,negCol,posCol,posCol,posCol],borderWidth:0}]},options:barOpts()});
+
+
+// EDIT: BT WOW CHARTS — update Week 25 and Week 26 data arrays
+// BT WoW Category
+new Chart(document.getElementById('btCatWowChart'),{type:'bar',data:{
+  labels:['Cycle Count','Shipping Funnel','Scrap - Damaged','Trailer Completion','R & D','Interplant Transfer','Triple Match Errors','Engineering Disc'],
+  datasets:[
+    {label:'Week 25',data:[-7702,-13075,-6989,6061,-11,-805,-619,-2171],backgroundColor:wk21col,borderColor:wk21bdr,borderWidth:1},
+    {label:'Week 26',data:[-11004,-11874,-4800,-5354,-1028,-805,3417,3926],backgroundColor:wk22col,borderColor:wk22bdr,borderWidth:1},
+  ]},options:wowOpts()});
+
+// BT WoW Taxonomy
+new Chart(document.getElementById('btTaxWowChart'),{type:'bar',data:{
+  labels:['Tires & Wheels','Hardware','Axles & Susp.','Electronics','Lumber','Fabrication','No Prior Tax','Paint'],
+  datasets:[
+    {label:'Week 27',data:[-4631,-22527,-3880,-3231,-2076,19454,-1220,34711],backgroundColor:wk21col,borderColor:wk21bdr,borderWidth:1},
+    {label:'Week 28',data:[-14521,-8344,-7281,-4081,2194,3621,4105,11764],backgroundColor:wk22col,borderColor:wk22bdr,borderWidth:1},
+  ]},options:wowOpts()});
+
+
+// EDIT: PJ WOW CHARTS — update Week 27 and Week 28 data arrays
+// PJ WoW Category
+new Chart(document.getElementById('pjCatWowChart'),{type:'bar',data:{
+  labels:['Scrap - Drop','Scrap - Damaged','Retail - Manuf Trans.','Cycle Count','Reverse Prod','Scrap - Cut Sheets'],
+  datasets:[
+    {label:'Week 27',data:[-21770,-7727,-11954,3247,0,0],backgroundColor:wk21col,borderColor:wk21bdr,borderWidth:1},
+    {label:'Week 28',data:[-33639,-15904,-15521,-11455,2348,22680],backgroundColor:wk22col,borderColor:wk22bdr,borderWidth:1},
+  ]},options:wowOpts()});
+
+// PJ WoW Taxonomy
+new Chart(document.getElementById('pjTaxWowChart'),{type:'bar',data:{
+  labels:['Primary Metals','Axles & Susp.','Hardware','Hydraulics','Electronics','(Blank)','Aluminum Fab','Paint','Fabrication','Lumber'],
+  datasets:[
+    {label:'Week 25',data:[-97749,-5032,-3016,-2682,-534,-2752,-836,4717,18266,23802],backgroundColor:wk21col,borderColor:wk21bdr,borderWidth:1},
+    {label:'Week 26',data:[42969,-7832,-1988,6665,-3597,0,0,3870,-37046,-6275],backgroundColor:wk22col,borderColor:wk22bdr,borderWidth:1},
+  ]},options:wowOpts()});
+
+// Location tables
+function buildLocTable(tbodyId, locData, weekTotal) {
+  const tbody = document.getElementById(tbodyId);
+  const border = 'rgba(0,0,0,0.08)';
+  locData.forEach((d,i) => {
+    const isPos = d.val >= 0, color = isPos ? posCol : negCol;
+    const absTotal = Math.abs(weekTotal) || 1;
+    const pct = Math.abs(d.val/absTotal*100).toFixed(0)+'%';
+    const valFmt = (isPos?'+':'-')+'$'+Math.abs(d.val).toLocaleString();
+    const barPct = Math.min(Math.abs(d.val/absTotal)*100,100);
+    const tr = document.createElement('tr');
+    tr.style.borderBottom = '0.5px solid '+border;
+    tr.innerHTML = `
+      <td style="padding:9px 8px 9px 0;color:${color};font-weight:500;font-size:13px;">${i+1}</td>
+      <td style="padding:9px 8px 9px 0;"><span class="loc-name">${d.name}</span>
+        <div class="mini-bar-track"><div class="mini-bar-fill" style="width:${barPct}%;background:${color};"></div></div></td>
+      <td style="padding:9px 0;color:${color};">${valFmt}</td>
+      <td style="padding:9px 0 9px 10px;">${pct}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// EDIT: BT LOC TABLE — update location names and val figures, and weekTotal
+buildLocTable('btLocTable',[
+  {name:'Wills Point',val:-16704},{name:'Mt Pleasant',val:-10873},
+  {name:'Batavia',val:-10047},{name:'Madill',val:-1072},{name:'Mt Pleasant - Retail',val:321}],-36391);
+
+// EDIT: PJ LOC TABLE — update location names and val figures, and weekTotal
+buildLocTable('pjLocTable',[
+  {name:'Mexico',val:-31336},{name:'Sumner',val:-24959},
+  {name:'Mt Orab',val:-13689},{name:'Sumner - Retail',val:7707}],-62277);
+
+function buildWowLocTable(tbodyId, rows) {
+  const tbody = document.getElementById(tbodyId);
+  rows.sort((a,b)=>a.w22-b.w22);
+  rows.forEach((d,i)=>{
+    const chg=d.w22-d.w21, isPos22=d.w22>=0, chgPos=chg>=0;
+    const fmt=v=>(v>=0?'+':'-')+'$'+Math.abs(Math.round(v)).toLocaleString();
+    const col22=isPos22?posCol:negCol, colChg=chgPos?'#3b6d11':'#a32d2d';
+    const maxAbs=Math.max(...rows.map(r=>Math.abs(r.w22)));
+    const barPct=Math.min(Math.abs(d.w22)/maxAbs*100,100);
+    const tr=document.createElement('tr');
+    tr.style.borderBottom='0.5px solid rgba(0,0,0,0.08)';
+    tr.innerHTML=`
+      <td style="padding:8px 8px 8px 0;color:${col22};font-weight:500;">${i+1}</td>
+      <td style="padding:8px 8px 8px 0;"><span style="font-size:12px;color:#1a1a18;">${d.name}</span>
+        <div style="margin-top:3px;height:3px;width:100%;background:#e8e7e0;border-radius:2px;">
+          <div style="height:3px;width:${barPct}%;background:${col22};border-radius:2px;"></div></div></td>
+      <td style="padding:8px 8px 8px 0;text-align:right;font-size:11px;color:#73726c;white-space:nowrap;">${fmt(d.w21)}</td>
+      <td style="padding:8px 0;text-align:right;font-weight:500;color:${col22};white-space:nowrap;">${fmt(d.w22)}</td>
+      <td style="padding:8px 0 8px 8px;text-align:right;font-size:11px;color:${colChg};white-space:nowrap;">${fmt(chg)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+buildWowLocTable('btLocWowTable',[
+  {name:'Mt Pleasant',w21:-4401,w22:-19875},{name:'Batavia',w21:-17987,w22:-10700},
+  {name:'Wills Point',w21:19061,w22:-2756},{name:'Madill',w21:-937,w22:-546},{name:'Mt Pleasant - Retail',w21:-2972,w22:236}]);
+
+buildWowLocTable('pjLocWowTable',[
+  {name:'Sumner',w21:6640,w22:-38161},{name:'Mt Orab',w21:6879,w22:-6421},
+  {name:'Mexico',w21:-24286,w22:-5107},{name:'Sumner - Retail',w21:7533,w22:29785}]);
+
+// Scrap Trend Charts
+
+// EDIT: WASTE CHARTS — add new week to scrapWeeks, scrapTotal, and each dataset array below
+const scrapWeeks=['Wk14','Wk15','Wk16','Wk17','Wk18','Wk19','Wk20','Wk21','Wk22','Wk23','Wk24','Wk25','Wk26','Wk27','Wk28','Wk29'];
+const scrapTotal=[-73050,-19987,-17426,-19623,-9393,-7566,-18488,-18666,-17910,-23204,-10823,-17496,-10338,-4986,-9627,-9216];
+new Chart(document.getElementById('scrapTrendChart'),{type:'line',data:{
+  labels:scrapWeeks,
+  datasets:[{label:'Total program waste ($)',data:scrapTotal,borderColor:negCol,backgroundColor:'rgba(163,45,45,0.08)',borderWidth:2,pointRadius:4,pointBackgroundColor:scrapTotal.map(v=>v===Math.min(...scrapTotal)?posCol:negCol),fill:true,tension:0.3}]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' $'+Math.round(c.parsed.y).toLocaleString()}}},
+    scales:{x:{ticks:{color:tc,font:{size:10}},grid:{color:gc}},
+      y:{ticks:{color:tc,font:{size:10},callback:v=>(v<0?'-':'')+'$'+Math.abs(v/1000).toFixed(0)+'k'},grid:{color:gc}}}}});
+
+new Chart(document.getElementById('scrapByLocChart'),{type:'bar',data:{
+  labels:scrapWeeks,
+  datasets:[
+    {label:'Mexico',data:[-36385,-12684,-33976,-27920,-14379,-8213,-34291,-34367,-19279,-25430,-15772,-23282,-13663,0,-6465,-8205],backgroundColor:'rgba(163,45,45,0.75)',borderWidth:0},
+    {label:'Mt Orab',data:[-25133,-43639,-348,-21221,0,0,0,0,-26269,-43616,-1002,-5611,-1255,-1638,-2136,0],backgroundColor:'rgba(176,117,0,0.75)',borderWidth:0},
+    {label:'Sumner',data:[-94074,-3309,-5653,-9734,6074,-8125,-10937,-7028,0,-4383,-2885,-13548,-3078,-2020,-1027,-1011],backgroundColor:'rgba(100,120,180,0.75)',borderWidth:0},
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{color:tc,font:{size:11},boxWidth:10,padding:10}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: $${Math.round(c.parsed.y).toLocaleString()}`}}},
+    scales:{x:{stacked:true,ticks:{color:tc,font:{size:10}},grid:{display:false}},
+      y:{stacked:true,ticks:{color:tc,font:{size:10},callback:v=>(v>=0?'':'-')+'$'+Math.abs(v/1000).toFixed(0)+'k'},grid:{color:gc}}}}});
+
+new Chart(document.getElementById('scrapByCatChart'),{type:'bar',data:{
+  labels:scrapWeeks,
+  datasets:[
+    {label:'Merchant',data:[-73050,-19987,-17078,-19623,-9393,-7566,-18488,-12184,-17910,-23204,-9065,-10187,-8193,-2020,-9627,-9216],backgroundColor:'rgba(163,45,45,0.80)',borderWidth:0},
+    {label:'Beam',data:[-47674,-20877,-7053,-18397,-2586,-997,-9271,-2304,-9115,-8767,0,-18160,0,0,0,0],backgroundColor:'rgba(163,45,45,0.55)',borderWidth:0},
+    {label:'Sheet',data:[-15791,-13946,-7637,-15453,-5884,-3148,-10414,-8560,-14395,-22933,-10113,-10983,-7612,0,0,0],backgroundColor:'rgba(100,120,180,0.75)',borderWidth:0},
+    {label:'Tube',data:[-19076,-4822,-8209,-5401,9558,-4627,-7055,-18347,-4128,-18526,-1482,-3610,-1342,-1638,0,0],backgroundColor:'rgba(100,120,180,0.45)',borderWidth:0},
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{color:tc,font:{size:11},boxWidth:10,padding:10}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: $${Math.round(c.parsed.y).toLocaleString()}`}}},
+    scales:{x:{stacked:true,ticks:{color:tc,font:{size:10}},grid:{display:false}},
+      y:{stacked:true,ticks:{color:tc,font:{size:10},callback:v=>(v>=0?'+':'-')+'$'+Math.abs(v/1000).toFixed(0)+'k'},grid:{color:gc}}}}});
+
+// ═══ BW CHARTS ═══
+new Chart(document.getElementById('bwIqrChart'),{type:'line',data:{
+  labels:['Wk9','Wk10','Wk11','Wk12','Wk13','Wk14','Wk15','Wk16','Wk17','Wk18','Wk19','Wk20','Wk21','Wk22','Wk23','Wk24','Wk26','Wk27','Wk28','Wk29','Wk30'],
+  datasets:[
+    {label:'Active ($M)',data:[3728,3911,4144,4152,4184,4005,4033,3988,3952,3935,3899,4219,4092,4106,4199,4480,4803,4718,4757,4760,4771],borderColor:'#3b6d11',backgroundColor:'rgba(59,109,17,0.07)',borderWidth:2,pointRadius:3,tension:0.3,yAxisID:'yA'},
+    {label:'Excess ($M)',data:[20,23,20,22,22,25,33,33,30,21,20,27,26,27,17,17,25,18,13,13,34],borderColor:'#b07500',backgroundColor:'transparent',borderWidth:1.5,pointRadius:2,borderDash:[4,3],tension:0.3,yAxisID:'yB'},
+    {label:'Obsolete ($M)',data:[113,121,132,129,137,137,143,163,139,137,136,136,127,135,136,145,153,146,143,143,158],borderColor:'#a32d2d',backgroundColor:'transparent',borderWidth:1.5,pointRadius:2,borderDash:[4,3],tension:0.3,yAxisID:'yB'},
+    {label:'Act/Slowing ($M)',data:[52,51,50,53,56,49,45,49,55,56,46,57,60,57,60,43,43,52,41,43,52],borderColor:'#5c7a9a',backgroundColor:'transparent',borderWidth:1.5,pointRadius:2,borderDash:[2,4],tension:0.3,yAxisID:'yB'},
+  ]},options:iqrOpts()});
+
+new Chart(document.getElementById('bwCatChart'),{type:'bar',data:{
+  labels:['Cycle Count','Drop','BOM / Missing','CC ELW','Damaged','Inv. Correction','Backflush','Engineering Disc'],
+  datasets:[{data:[-7655,-4075,-2024,-814,-351,2632,660,-7064],backgroundColor:[negCol,negCol,negCol,negCol,negCol,posCol,posCol,negCol],borderWidth:0}]},options:barOpts()});
+
+new Chart(document.getElementById('bwTaxChart'),{type:'bar',data:{
+  labels:['Engineering Disc / Paint','Fabrication','Hardware','Axles & Susp.','Electronics','Lumber','Trailer Completion'],
+  datasets:[{data:[-7064,-3298,-2847,-1209,-576,398,660],backgroundColor:[negCol,negCol,negCol,negCol,negCol,posCol,posCol],borderWidth:0}]},options:barOpts()});
+
+
+</script>
+</body>
+</html>
