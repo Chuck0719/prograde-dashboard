@@ -17,18 +17,18 @@
 
     /* Home / cross-dashboard nav */
     .home-bar {
-      background: #111110;
+      background: #15140F;
       padding: 6px 20px;
       display: flex;
       align-items: center;
       gap: 8px;
       flex-wrap: wrap;
-      border-bottom: 1px solid #2e2e2b;
+      border-bottom: 1px solid #2A2A22;
     }
     .home-bar a {
       background: transparent;
       border: 1px solid #3b3b38;
-      color: #a0a09a;
+      color: #9C9A8F;
       font-size: 11px;
       font-weight: 600;
       padding: 3px 11px;
@@ -38,7 +38,7 @@
       transition: background .15s, color .15s, border-color .15s;
     }
     .home-bar a:hover,
-    .home-bar a:focus-visible { background: #3b6d11; border-color: #3b6d11; color: #fff; outline: none; }
+    .home-bar a:focus-visible { color: #B8862E; border-color: #B8862E; outline: none; }
     .home-bar .sep { color: #3b3b38; font-size: 11px; }
 
     /* Week selector bar */
@@ -51,7 +51,7 @@
       flex-wrap: wrap;
       border-bottom: 2px solid #3b6d11;
     }
-    .topbar .title { color: #f5f5f3; font-size: 13px; font-weight: 700; white-space: nowrap; }
+    .topbar .title { font-family:'Newsreader',serif; font-style:italic; color: #f5f5f3; font-size: 15px; font-weight: 500; white-space: nowrap; }
     .topbar select {
       background: #2e2e2b;
       color: #f5f5f3;
@@ -101,6 +101,8 @@
       .topbar .hint { display: none; }
     }
   </style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@1,500&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="home-bar">
